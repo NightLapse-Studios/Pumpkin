@@ -8,18 +8,20 @@
 		"$ignoreUnknownInstances": true,
 		"ReplicatedFirst": {
 			"$className": "ReplicatedFirst",
-			"$path": "src/replicated_first",
 			"$ignoreUnknownInstances": true,
 			"Lib": {
-				"$path": "lib"
+				"$path": "src/lib"
+			},
+			"Pumpkin": {
+				"$path": "src/Pumpkin.lua"
 			}
 		},
 		"StarterPlayer": {
 			"$className": "StarterPlayer",
 			"StarterPlayerScripts": {
 				"$className": "StarterPlayerScripts",
-				"$path": "src/example",
-				"$ignoreUnknownInstances": true
+				"$ignoreUnknownInstances": true,
+				"$path": "src/example/"
 			}
 		}
 	}

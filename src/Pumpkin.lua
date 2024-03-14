@@ -67,14 +67,12 @@ local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 
 local IsServer = RunService:IsServer()
-local CONTEXT = IsServer and "SERVER" or "CLIENT"
 
-local I = {
-	Type = "Builder",
-	Context = CONTEXT,
+local mod = {
+	Roact = Roact
 }
 
-setmetatable(I, {
+setmetatable(mod, {
 	__index = function(t, index)
 		return function(...)
 			local total = 0
@@ -526,7 +524,7 @@ setmetatable(PropSet, {
 
 local mt_PropSet = { __index = PropSet }
 
-function I.P()
+function mod.P()
 	local set = {
 		props = { }
 	}
@@ -535,11 +533,11 @@ function I.P()
 	return set
 end
 
-local P = I.P
+local P = mod.P
 
 function PropSet:RoundCorners(scale, pixels)
 	self:Children(
-		I:UICorner(P()
+		mod:UICorner(P()
 			:CornerRadius(scale or 0, pixels or 4)
 		)
 	)
@@ -549,7 +547,7 @@ end
 
 function PropSet:Border(thick, color)
 	self:Children(
-		I:UIStroke(P()
+		mod:UIStroke(P()
 			:ApplyStrokeMode(Enum.ApplyStrokeMode.Border)
 			:Color(color or Color3.new(0, 0, 0))
 			:Thickness(thick or 2)
@@ -632,7 +630,7 @@ end
 function PropSet:AspectRatioProp(ratio)
 	-- Aspect Ratio is X/Y, so the larger the ratio, the larger Width.
 	self:Children(
-		I:UIAspectRatioConstraint(P()
+		mod:UIAspectRatioConstraint(P()
 			:AspectRatio(ratio)
 		)
 	)
@@ -814,7 +812,7 @@ function PropSet:ScaledTextSize(groupName, constantText)
 	
 	local group = scaledTextGroups[groupName]
 	if not group then
-		local binding = I:Binding(0)
+		local binding = mod:Binding(0)
 		
 		scaledTextGroups[groupName] = {
 			Binding = binding,
@@ -826,7 +824,7 @@ function PropSet:ScaledTextSize(groupName, constantText)
 		group = scaledTextGroups[groupName]
 	end
 	
-	local ref = I:CreateRef()
+	local ref = mod:CreateRef()
 	self:Ref(ref)
 	
 	table.insert(group.Refs, ref)
@@ -914,7 +912,7 @@ function PropSet:Change(name, callback)
 end
 
 --A small system which allows us to register external functions which modify the props of the element being built
-function I:RegisterModifier(name, func)
+function mod:RegisterModifier(name, func)
 	assert(PropSet[name] == nil)
 	
 	PropSet[name] = function(self, ...)
@@ -925,7 +923,7 @@ end
 
 
 -- Portal functionality
-function I:Portal(prop_set)
+function mod:Portal(prop_set)
 	local props = prop_set.props
 	local element = Roact.createElement(Roact.Portal, props)
 	
@@ -939,7 +937,7 @@ end
 
 
 -- Stateful functionality
-function I:Stateful(prop_set)
+function mod:Stateful(prop_set)
 	local props = prop_set.props
 	
 	local component = Roact.Component:extend(props.Name)
@@ -951,7 +949,7 @@ function I:Stateful(prop_set)
 	component.shouldUpdate = props.shouldUpdate
 	component.didUpdate = props.didUpdate
 	
-	I[props.Name] = function(_self, this_prop_set: table)
+	mod[props.Name] = function(_self, this_prop_set: table)
 		local this_props = this_prop_set.props
 		local element = Roact.createElement(component, this_props)
 		
@@ -996,31 +994,31 @@ function PropSet:DidUpdate(func)
 	return self
 end
 
-function I:Binding(default)
+function mod:Binding(default)
 	return Roact.createBinding(default)
 end
 
-function I:JoinBindings(bindings)
+function mod:JoinBindings(bindings)
 	return Roact.joinBindings(bindings)
 end
 
-function I:Fragment(t: table)
+function mod:Fragment(t: table)
 	return Roact.createFragment(t)
 end
 
-function I:CreateRef()
+function mod:CreateRef()
 	return Roact.createRef()
 end
 
-function I:Mount(tree, parent)
+function mod:Mount(tree, parent)
 	return Roact.mount(tree, parent)
 end
 
-function I:Unmount(handle)
+function mod:Unmount(handle)
 	Roact.unmount(handle)
 end
 
-function I:Tween(start)
+function mod:Tween(start)
 	start = start or 0
 
 	local binding, _ = Roact.createBinding(start)
@@ -1031,7 +1029,7 @@ end
 local StandardElements = {}
 local StandardElementsAwaiting = {}
 
-function I:NewElement(name, element_prototype)
+function mod:NewElement(name, element_prototype)
 	assert(StandardElements[name] == nil)
 	
 	StandardElements[name] = element_prototype
@@ -1045,7 +1043,7 @@ function I:NewElement(name, element_prototype)
 	end
 end
 
-function I:Element(name, prop_set)
+function mod:Element(name, prop_set)
 	if not StandardElements[name] then
 		local signal = ClassicSignal.new()
 		
@@ -1075,14 +1073,14 @@ function I:Element(name, prop_set)
 	return element
 end
 
-function I:IsPositionInObject(position, object: GuiBase2d)
+function mod:IsPositionInObject(position, object: GuiBase2d)
 	local topLeft = object.AbsolutePosition
 	local bottomRight = topLeft + object.AbsoluteSize
 	
 	return position.X < bottomRight.X and position.X > topLeft.X and position.Y < bottomRight.Y and position.Y > topLeft.Y
 end
 
-function I:IsScrollBarAtEnd(barRBX, damp)
+function mod:IsScrollBarAtEnd(barRBX, damp)
 	damp = damp or 1
 
 	local maxYPosition = barRBX.AbsoluteCanvasSize.Y - barRBX.AbsoluteSize.Y
@@ -1134,7 +1132,7 @@ for class, properties in pairs(Classes) do
 		end
 	end
 
-	I[class] = function(_self, prop_set: table)
+	mod[class] = function(_self, prop_set: table)
 		local props = prop_set.props
 		local element = Roact.createElement(class, props)
 		
@@ -1144,4 +1142,4 @@ end
 
 setmetatable(Roact.elementModule, {__index = PropSet})
 
-return I
+return mod
