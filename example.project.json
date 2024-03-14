@@ -1,0 +1,26 @@
+{
+	"name": "Pumpkin Example",
+	"servePlaceIds": [
+		0
+	],
+	"tree": {
+		"$className": "DataModel",
+		"$ignoreUnknownInstances": true,
+		"ReplicatedFirst": {
+			"$className": "ReplicatedFirst",
+			"$path": "src/replicated_first",
+			"$ignoreUnknownInstances": true,
+			"Lib": {
+				"$path": "lib"
+			}
+		},
+		"StarterPlayer": {
+			"$className": "StarterPlayer",
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"$path": "src/example",
+				"$ignoreUnknownInstances": true
+			}
+		}
+	}
+}
