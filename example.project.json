@@ -14,6 +14,9 @@
 			},
 			"Pumpkin": {
 				"$path": "src/Pumpkin.lua"
+			},
+			"DebugMenuEx": {
+				"$path": "src/example/DebugMenuEx"
 			}
 		},
 		"StarterPlayer": {
@@ -21,8 +24,13 @@
 			"StarterPlayerScripts": {
 				"$className": "StarterPlayerScripts",
 				"$ignoreUnknownInstances": true,
-				"$path": "src/example/"
+				"$path": "src/example/client"
 			}
+		},
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"$ignoreUnknownInstances": true,
+			"$path": "src/example/server"
 		}
 	}
 }

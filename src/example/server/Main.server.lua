@@ -1,0 +1,1 @@
+local DebugMenu = require(game.ReplicatedFirst.DebugMenuEx)

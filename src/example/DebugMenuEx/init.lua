@@ -6,10 +6,11 @@ local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
 
-local sgui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-sgui.Name = "DebugMenu"
-
 if not IsServer then
+	local sgui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+	sgui.Name = "DebugMenu"
+
+	-- For frameworks which manager your scripts, you can remove this block
 	require(script:WaitForChild("DebugSlider"))
 	require(script:WaitForChild("DebugTextBox"))
 	require(script:WaitForChild("DebugCheckbox"))
@@ -23,10 +24,12 @@ local DebugMenuCreationBroadcaster
 
 if IsServer then
 	DebugMenuDataTransmitter = Instance.new("RemoteEvent", game.ReplicatedStorage)
+	DebugMenuDataTransmitter.Name = "DebugMenuDataTransmitter"
 	DebugMenuCreationBroadcaster = Instance.new("RemoteEvent", game.ReplicatedStorage)
+	DebugMenuCreationBroadcaster.Name = "DebugMenuCreationBroadcaster"
 else
-	Instance.new("RemoteEvent", game.ReplicatedStorage:WaitForChild("DebugMenuDataTransmitter"))
-	Instance.new("RemoteEvent", game.ReplicatedStorage:WaitForChild("DebugMenuCreationBroadcaster"))
+	DebugMenuDataTransmitter = game.ReplicatedStorage:WaitForChild("DebugMenuDataTransmitter")
+	DebugMenuCreationBroadcaster = game.ReplicatedStorage:WaitForChild("DebugMenuCreationBroadcaster")
 end
 
 local mod = {}
