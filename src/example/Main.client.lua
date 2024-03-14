@@ -1,4 +1,4 @@
-local DebugMenu = script.Parent:WaitForChild("DebugMenuEx")
+local DebugMenu = script.Parent:WaitForChild("DebugMenu")
 
 while #DebugMenu:GetChildren() < 6 do
 	task.wait()
