@@ -146,6 +146,7 @@ return {
 	-- ROBLOX DEVIATION: export Change, Event, Tag, and Symbols from React
 	Event = require(Packages.Shared).Event,
 	Change = require(Packages.Shared).Change,
+	Attribute = require(Packages.Shared).Attribute,
 	Tag = require(Packages.Shared).Tag,
 	Symbols = ReactSymbols,
 

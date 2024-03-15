@@ -35,6 +35,7 @@ end
 
 addType("HostChangeEvent")
 addType("HostEvent")
+addType("Attribute")
 
 function TypeInternal.of(value)
 	if typeof(value) ~= "table" then

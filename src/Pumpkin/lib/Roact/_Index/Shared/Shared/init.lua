@@ -135,4 +135,5 @@ return {
 	Change = require(script.PropMarkers.Change),
 	Event = require(script.PropMarkers.Event),
 	Tag = require(script.PropMarkers.Tag),
+	Attribute = require(script.PropMarkers.Attribute),
 }

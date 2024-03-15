@@ -62,8 +62,6 @@ local mod = {
 	RoactRbx = RoactRbx
 }
 
-local r
-
 setmetatable(mod, {
 	__index = function(t, index)
 		return function(...)
@@ -79,9 +77,6 @@ setmetatable(mod, {
 		end
 	end
 })
-
-task.delay(5, function() print(r) end)
-task.delay(10, function() print(r) end)
 
 -- differentiate between color3 and colorSequence
 local function decodeColors(...)
@@ -924,9 +919,10 @@ end
 
 
 -- Portal functionality
-function mod:Portal(prop_set)
+-- TODO: Test this with react 17 update
+function mod:Portal(children, container, prop_set, opt_key: string?)
 	local props = prop_set.props
-	local element = Roact.createElement(Roact.Portal, props)
+	local element = RoactRbx.createPortal(children, container, props)
 	
 	return element
 end
@@ -1013,10 +1009,6 @@ function mod:Mount(tree, parent)
 	root:render(tree)
 
 	return root
-end
-
-function mod:Unmount(handle)
-	Roact.unmount(handle)
 end
 
 function mod:Tween(start)

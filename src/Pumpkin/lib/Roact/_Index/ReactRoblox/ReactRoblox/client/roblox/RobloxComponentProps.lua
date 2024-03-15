@@ -84,6 +84,10 @@ local function setRobloxInstanceProperty(hostInstance, key, newValue): ()
 	hostInstance[key] = newValue
 end
 
+local function applyAttribute(hostInstance, name, value)
+	hostInstance:SetAttribute(name, value)
+end
+
 local function removeBinding(hostInstance, key)
 	local bindings = instanceToBindings[hostInstance]
 	if bindings ~= nil then
@@ -114,6 +118,21 @@ local function attachBinding(hostInstance, key, newBinding): ()
 			-- need to keep the hard error here
 			error(fullMessage, 0)
 		end
+	end
+
+	if instanceToBindings[hostInstance] == nil then
+		instanceToBindings[hostInstance] = {}
+	end
+
+	instanceToBindings[hostInstance][key] =
+		React.__subscribeToBinding(newBinding, updateBoundProperty)
+
+	updateBoundProperty(newBinding:getValue())
+end
+
+local function attachAttributeBinding(hostInstance, key, newBinding)
+	local function updateBoundProperty(newValue)
+		applyAttribute(hostInstance, key, newValue)
 	end
 
 	if instanceToBindings[hostInstance] == nil then
@@ -197,7 +216,13 @@ local function applyProp(hostInstance: Instance, key, newValue, oldValue): ()
 	end
 
 	if newIsBinding then
-		attachBinding(hostInstance, key, newValue)
+		if internalKeyType == Type.Attribute then
+			attachAttributeBinding(hostInstance, key.name, newValue)
+		else
+			attachBinding(hostInstance, key, newValue)
+		end
+	elseif internalKeyType == Type.Attribute then
+		applyAttribute(hostInstance, key.name, newValue)
 	elseif key == Tag then
 		applyTags(hostInstance, oldValue, newValue)
 	else
