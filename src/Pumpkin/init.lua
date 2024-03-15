@@ -1,16 +1,4 @@
 --[[
-	Unlike most things in the Lib folder, this file has the normal lifecycle and but it does so through a manual
-	call to G.LightLoad from LazyModules since it's part of that system
-
-	Elements are available for use after the __ui pass, although they can be used earlier but the timing of their
-	initialization is not guaranteed. They will become available in whichever order modules happen to be loaded.
-
-	** See mod:__finalize for further docs.
-
-	** See Menu.lua for some usage examples, including Elements.
-
-	** See GUI.lua for examples of how to register Elements.
-
 	Tweens:
 			Tweens play when they are mounted, they are an extension to bindings.
 			If they are unmounted, their motor still runs, but the sequence will not advance to the next step until mounted again.
@@ -813,7 +801,7 @@ local function getMaxSize(rbx: TextLabel, constantText)
 	end
 end
 
-function PropSet:ScaledTextSize(groupName, constantText)
+function PropSet:ScaledTextGroup(groupName, constantText)
 	if type(constantText) == "number" then
 		constantText = string.rep(" ", constantText)
 	end
@@ -919,6 +907,11 @@ function PropSet:Change(name, callback)
 	return self
 end
 
+function PropSet:Run(func, ...)
+	func(self, ...)
+	return self
+end
+
 --A small system which allows us to register external functions which modify the props of the element being built
 function mod:RegisterModifier(name, func)
 	assert(PropSet[name] == nil)
@@ -1001,6 +994,7 @@ function PropSet:DidUpdate(func)
 	self.props.didUpdate = func
 	return self
 end
+
 
 function mod:Binding(default)
 	return Roact.createBinding(default)

@@ -12,8 +12,8 @@
 			"Pumpkin": {
 				"$path": "src/Pumpkin"
 			},
-			"DebugMenuEx": {
-				"$path": "src/example/DebugMenuEx"
+			"DebugMenu": {
+				"$path": "src/example/DebugMenu"
 			}
 		},
 		"StarterPlayer": {

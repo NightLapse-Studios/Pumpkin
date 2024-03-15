@@ -1,1 +1,1 @@
-local DebugMenu = require(game.ReplicatedFirst.DebugMenuEx)
+local DebugMenu = require(game.ReplicatedFirst.DebugMenu)
