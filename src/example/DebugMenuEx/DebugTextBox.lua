@@ -19,7 +19,7 @@
 ]]
 local Pumpkin = require(game.ReplicatedFirst.Pumpkin)
 local I, P, Roact = Pumpkin, Pumpkin.P, Pumpkin.Roact
-local ExpressionParser = require(game.ReplicatedFirst.Lib.ExpressionParser)
+local ExpressionParser = require(script.Parent:WaitForChild("ExpressionParser"))
 
 local TextBox = {}
 
@@ -38,7 +38,7 @@ local function render(self)
 	local props = self.props
 	
 	local oldLost = props[Roact.Event.FocusLost]
-	local ref = props[Roact.Ref]
+	local ref = props["ref"]
 
 	return I:TextBox(P()
 		:BorderSizePixel(1)

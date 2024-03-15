@@ -46,7 +46,7 @@ I:Stateful(P()
 				end
 			end
 			
-			return I:Fragment({I:Fragment(renderPoints), I:Fragment(renderLines)})
+			return {renderPoints, renderLines}
 		end
 		
 		local minY, maxY = math.huge, -math.huge
@@ -105,9 +105,9 @@ I:Stateful(P()
 			end
 		end
 		
-		return I:Fragment({
-			I:Fragment(renderLines),
-			I:Fragment(renderPoints),
+		return {
+			renderLines,
+			renderPoints,
 			
 			-- y axis top bound
 			I:TextLabel(P()
@@ -198,7 +198,7 @@ I:Stateful(P()
 				:Size(0, 1, 0, 20)
 				:ClipsDescendants(false)
 			),
-		})
+		}
 	end)
 )
 

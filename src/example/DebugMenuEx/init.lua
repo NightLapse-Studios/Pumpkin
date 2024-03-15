@@ -221,13 +221,15 @@ local function init(self)
 	self.ColorPickingPosition = I:Binding(UDim2.new(0, 50, 0, 50))
 	self.ColorPicking = I:Binding(false)
 	self.ColorPickingColor = I:Binding(Color3.new())
+
+	print(self.ColorPickingColor:getValue())
 	
-	self.ColorPickingColor:subscribe(function(value)
+--[[ 	self.ColorPickingColor:subscribe(function(value)
 		local props = self.ColorPicking:getValue()
 		if props then
 			props.Binding.update(value)
 		end
-	end)
+	end) ]]
 	
 	self.Position = I:Binding(UDim2.new(0, 50, 0, 50))
 	self.Enabled = false
@@ -360,7 +362,7 @@ local function render(self)
 				:Padding(0, 5)
 			),
 			
-			I:Fragment(strips)
+			strips
 		))
 	end
 	
@@ -430,7 +432,7 @@ local function render(self)
 						:HorizontalAlignment("Left")
 					),
 				
-					I:Fragment(menuElements)
+					menuElements
 				),
 				
 				I:ScrollingFrame(P()
@@ -449,7 +451,7 @@ local function render(self)
 						:VerticalAlignment("Top")
 					),	
 				
-					I:Fragment(plotElements)
+					plotElements
 				),
 			})
 		),

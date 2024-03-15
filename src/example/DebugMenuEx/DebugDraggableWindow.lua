@@ -67,7 +67,7 @@ I:Stateful(P()
 				:Size(1, 0, 1, 0)
 				:Invisible()
 			):Children(
-				I:Fragment(self.props.Children)
+				self.props.Children
 			)
 		)
 	end)

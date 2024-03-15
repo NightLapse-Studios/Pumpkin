@@ -1,5 +1,5 @@
 {
-	"name": "Pumpkin Example",
+	"name": "Debug Menu Example",
 	"servePlaceIds": [
 		0
 	],
@@ -9,11 +9,8 @@
 		"ReplicatedFirst": {
 			"$className": "ReplicatedFirst",
 			"$ignoreUnknownInstances": true,
-			"Lib": {
-				"$path": "src/lib"
-			},
 			"Pumpkin": {
-				"$path": "src/Pumpkin.lua"
+				"$path": "src/Pumpkin"
 			},
 			"DebugMenuEx": {
 				"$path": "src/example/DebugMenuEx"

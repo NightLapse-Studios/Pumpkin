@@ -255,7 +255,7 @@ local function render(self)
 				:VerticalAlignment("Top")
 			),
 			
-			I:Fragment(List)
+			list
 		)
 	)
 end

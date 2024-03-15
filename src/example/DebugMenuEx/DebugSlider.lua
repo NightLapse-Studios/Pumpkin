@@ -79,7 +79,7 @@ local function render_Slider(self)
 				end)
 			),
 			
-			I:Fragment(self.props.Children)
+			self.props.Children
 		),
 		
 		I:Frame(P()
