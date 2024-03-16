@@ -1015,7 +1015,7 @@ function mod:Tween(start)
 	start = start or 0
 
 	local binding, _ = Roact.createBinding(start)
-	return binding:getTween()
+	return binding:makeTweenable()
 end
 
 

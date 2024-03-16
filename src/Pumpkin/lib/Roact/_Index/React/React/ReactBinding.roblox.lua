@@ -18,6 +18,8 @@ local Packages = script.Parent.Parent
 
 local LuauPolyfill = require(Packages.LuauPolyfill)
 local ReactSymbols = require(Packages.Shared).ReactSymbols
+local Flipper = require(Packages.Parent.Parent.Parent.Flipper)
+local RoactTweenHandler = require(script.Parent.ReactTweenHandler)
 
 local ReactTypes = require(Packages.Shared)
 type Binding<T> = ReactTypes.ReactBinding<T>
@@ -40,7 +42,9 @@ type BindingInternal<T> = {
 	subscribe: ((T) -> ()) -> (() -> ()),
 }
 
-local BindingInternalApi = {}
+local BindingInternalApi = {
+	BindingImpl = BindingImpl
+}
 
 local bindingPrototype = {}
 
@@ -53,6 +57,191 @@ function bindingPrototype.map<T, U>(
 	predicate: (T) -> U
 ): Binding<U>
 	return BindingInternalApi.map(binding, predicate)
+end
+
+local function tween(self)
+	local impl = self[BindingImpl]
+	
+	local motor = Flipper.SingleMotor.new(impl.value, false)
+	motor:onStep(impl.update)
+		
+	local newTween = {
+		sequence = {},
+		motor = motor,
+		currentSequenceIndex = 1,
+		AtEndOfSequence = false,
+		PlayID = false,
+		paused = false,
+	}
+	
+	if not impl.tweens then
+		impl.tweens = setmetatable({},{__mode = "v"})
+	end
+	
+	table.insert(impl.tweens, newTween)
+	
+	setmetatable(newTween, {
+		__index = self,
+	})
+	
+	return newTween
+end
+
+function bindingPrototype:makeTweenable()
+	return tween(self)
+end
+
+function bindingPrototype:linear(target, speed)
+	local new = false
+	if not self.motor then
+		self = tween(self)
+		new = true
+	end
+	
+	local goal = Flipper.Linear.new(target, {velocity = speed})
+	self.sequence[#self.sequence + 1] = {
+		Target = goal,
+	}
+	
+	if new then
+		if self[BindingImpl].isAttached then
+			self.PlayID = RoactTweenHandler.playSequence(self)
+		end
+	end
+	
+	return self
+end
+
+function bindingPrototype:instant(target)
+	local new = false
+	if not self.motor then
+		self = tween(self)
+		new = true
+	end
+	
+	local goal = Flipper.Instant.new(target)
+	self.sequence[#self.sequence + 1] = {
+		Target = goal,
+	}
+	
+	if new then
+		if self[BindingImpl].isAttached then
+			self.PlayID = RoactTweenHandler.playSequence(self)
+		end
+	end
+	
+	return self
+end
+
+function bindingPrototype:spring(target, frequency, dampingRatio)
+	local new = false
+	if not self.motor then
+		self = tween(self)
+		new = true
+	end
+	
+	local goal = Flipper.Spring.new(target, {frequency = frequency, dampingRatio = dampingRatio})
+	self.sequence[#self.sequence + 1] = {
+		Target = goal,
+	}
+	
+	if new then
+		if self[BindingImpl].isAttached then
+			self.PlayID = RoactTweenHandler.playSequence(self)
+		end
+	end
+	
+	return self
+end
+
+function bindingPrototype:repeatAll(count)
+	self.sequence[#self.sequence+1] = {
+		RepeatAll = count,
+		Counter = count,
+	}
+	return self
+end
+
+function bindingPrototype:repeatThis(count)
+	self.sequence[#self.sequence+1] = {
+		RepeatThis = count,
+		Counter = count,
+	}
+	return self
+end
+
+function bindingPrototype:reset()
+	for i = 1, #self.sequence do
+		local key = self.sequence[i]
+		if key.Counter then
+			key.Counter = key.RepeatThis or key.RepeatAll
+		end
+		key.TickEnd = nil
+	end
+	self.motor:reset()
+	self.currentSequenceIndex = 1
+	
+	return self
+end
+
+function bindingPrototype:pause(t)
+	if not t then
+		self.paused = tick()
+		self.motor:stop()
+	else
+		self.sequence[#self.sequence+1] = {
+			Pause = t,
+			TickEnd = nil,
+		}
+	end
+	
+	return self
+end
+
+function bindingPrototype:resume()
+	self.motor:start()
+	self.paused = false
+	
+	return self
+end
+
+function bindingPrototype:wipe()
+	self.sequence = {}
+	self.motor:reset()
+	self.currentSequenceIndex = 1
+	self.paused = false
+	self.holdPause = false
+	self.AtEndOfSequence = false
+	
+	return self
+end
+
+function bindingPrototype:skip()
+	-- will pick up where the motor value is currently at
+	
+	if self.sequence[self.currentSequenceIndex] then
+		self.motor:stop()
+		table.remove(self.sequence, self.currentSequenceIndex)
+	end
+	
+	return self
+end
+
+function bindingPrototype:jump()
+	-- will pick up at the current target of the motor value
+	
+	local seqKey = self.sequence[self.currentSequenceIndex]
+	if seqKey then
+		if seqKey.Target and self.motor._goal then
+			self.motor:jump()
+		end
+		table.remove(self.sequence, self.currentSequenceIndex)
+		
+		-- allows for the next step to start instantly incase we call jump again immediately after, it actually does something.
+		RoactTweenHandler.updateSequence(self.PlayID)
+	end
+	
+	return self
 end
 
 local BindingPublicMeta = {
@@ -79,7 +268,22 @@ function BindingInternalApi.create<T>(initialValue: T): (Binding<T>, BindingUpda
 	local impl = {
 		value = initialValue,
 		subscribe = subscribe,
+		isAttached = false
 	}
+	
+	function impl.attached(value)
+		impl.isAttached = value
+		
+		if impl.tweens then
+			for i,v in pairs(impl.tweens) do
+				if value then
+					v.PlayID = RoactTweenHandler.playSequence(v)
+				else
+					RoactTweenHandler.stopSequence(v.PlayID)
+				end
+			end
+		end
+	end
 
 	function impl.update(newValue: T)
 		impl.value = newValue
@@ -100,6 +304,7 @@ function BindingInternalApi.create<T>(initialValue: T): (Binding<T>, BindingUpda
 		["$$typeof"] = ReactSymbols.REACT_BINDING_TYPE,
 		[BindingImpl] = impl,
 		update = impl.update,
+		subscribe = impl.subscribe,
 		_source = source,
 	}, BindingPublicMeta) :: any) :: Binding<T>,
 		impl.update
@@ -119,7 +324,14 @@ function BindingInternalApi.map<T, U>(
 		assert(typeof(predicate) == "function", "Expected arg #1 to be a function")
 	end
 
-	local impl = {}
+	local impl = {
+		isAttached = false
+	}
+
+	function impl.attached(value)
+		impl.isAttached = value
+		upstreamBinding[BindingImpl].attached(value)
+	end
 
 	function impl.subscribe(callback)
 		return BindingInternalApi.subscribe(upstreamBinding, function(newValue)
@@ -146,6 +358,8 @@ function BindingInternalApi.map<T, U>(
 			["$$typeof"] = ReactSymbols.REACT_BINDING_TYPE,
 			[BindingImpl] = impl,
 			update = impl.update,
+			subscribe = impl.subscribe,
+			isAttached = false,
 			_source = source,
 		}, BindingPublicMeta) :: any
 	) :: Binding<U>
@@ -172,7 +386,18 @@ function BindingInternalApi.join<T>(
 		end
 	end
 
-	local impl = {}
+	local impl = {
+		isAttached = false,
+		-- Stores disconnect funcs for subscribers
+		subscribers = { }
+	}
+	
+	function impl.attached(value)
+		impl.isAttached = value
+		for key, upstream in pairs(upstreamBindings) do
+			upstream[BindingImpl].attached(value)
+		end
+	end
 
 	local function getValue()
 		local value = {}
@@ -228,6 +453,7 @@ function BindingInternalApi.join<T>(
 			[BindingImpl] = impl,
 			_source = source,
 			update = impl.update,
+			subscribe = impl.subscribe,
 		}, BindingPublicMeta) :: any
 	) :: Binding<T>
 end

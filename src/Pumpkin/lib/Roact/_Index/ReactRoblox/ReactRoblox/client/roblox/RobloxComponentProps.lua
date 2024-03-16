@@ -1,3 +1,4 @@
+--!strict
 --[[
 	* Copyright (c) Roblox Corporation. All rights reserved.
 	* Licensed under the MIT License (the "License");
@@ -23,8 +24,12 @@ local inspect = LuauPolyfill.util.inspect
 
 local console = require(Packages.Shared).console
 
+local Shared = require(Packages.Shared)
+
 local React = require(Packages.React)
 local ReactSymbols = require(Packages.Shared).ReactSymbols
+local Binding = require(Packages.Parent.React.React["ReactBinding.roblox"])
+type ReactBinding<T> = Shared.ReactBinding<T>
 local SingleEventManager = require(script.Parent.SingleEventManager)
 type EventManager = SingleEventManager.EventManager
 local Type = require(Packages.Shared).Type
@@ -45,7 +50,7 @@ type Object = { [any]: any }
 -- ROBLOX FIXME: Stronger typing for EventManager
 
 local instanceToEventManager: { [HostInstance]: EventManager } = {}
-local instanceToBindings: { [HostInstance]: { [string]: any } } = {}
+local instanceToBindings: { [HostInstance]: { [string]: { ReactBinding<any> | any } } } = {}
 
 local applyPropsError = [[
 Error applying initial props to Roblox Instance '%s' (%s):
@@ -88,15 +93,6 @@ local function applyAttribute(hostInstance, name, value)
 	hostInstance:SetAttribute(name, value)
 end
 
-local function removeBinding(hostInstance, key)
-	local bindings = instanceToBindings[hostInstance]
-	if bindings ~= nil then
-		local disconnect = bindings[key]
-		disconnect()
-		bindings[key] = nil
-	end
-end
-
 local function attachBinding(hostInstance, key, newBinding): ()
 	local function updateBoundProperty(newValue)
 		local success, errorMessage =
@@ -124,10 +120,28 @@ local function attachBinding(hostInstance, key, newBinding): ()
 		instanceToBindings[hostInstance] = {}
 	end
 
-	instanceToBindings[hostInstance][key] =
-		React.__subscribeToBinding(newBinding, updateBoundProperty)
+	instanceToBindings[hostInstance][key] = { newBinding, React.__subscribeToBinding(newBinding, updateBoundProperty) }
 
 	updateBoundProperty(newBinding:getValue())
+
+	newBinding[Binding.BindingImpl].attached(true)
+end
+
+local function detachBindings(hostInstance)
+	local bindings = instanceToBindings[hostInstance]
+	if bindings ~= nil then
+		for key, disconnect in pairs(bindings) do
+			bindings[key][1][Binding.BindingImpl].attached(false)
+			bindings[key][2]()
+			bindings[key] = nil
+		end
+	end
+end
+
+local function detatchTreeBindings(hostInstance)
+	for _,v in hostInstance:GetDescendants() do
+		detachBindings(v)
+	end
 end
 
 local function attachAttributeBinding(hostInstance, key, newBinding)
@@ -143,6 +157,8 @@ local function attachAttributeBinding(hostInstance, key, newBinding)
 		React.__subscribeToBinding(newBinding, updateBoundProperty)
 
 	updateBoundProperty(newBinding:getValue())
+
+	newBinding[Binding.BindingImpl].attached(true)
 end
 
 local function applyTags(hostInstance: Instance, oldTags: string?, newTags: string?)
@@ -212,7 +228,7 @@ local function applyProp(hostInstance: Instance, key, newValue, oldValue): ()
 		and typeof(oldValue) == "table"
 		and oldValue["$$typeof"] == ReactSymbols.REACT_BINDING_TYPE
 	if oldIsBinding then
-		removeBinding(hostInstance, key)
+		detachBinding(hostInstance, key)
 	end
 
 	if newIsBinding then
@@ -326,6 +342,8 @@ end
 -- ROBLOX deviation: Clear out references to components when they unmount so we
 -- avoid leaking memory when they're removed
 local function cleanupHostComponent(domElement: HostInstance)
+	detatchTreeBindings(domElement)
+	
 	if instanceToEventManager[domElement] ~= nil then
 		instanceToEventManager[domElement] = nil
 	end
