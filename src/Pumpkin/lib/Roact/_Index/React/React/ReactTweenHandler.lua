@@ -24,6 +24,8 @@ function mod.stopSequence(playID)
 		return
 	end
 
+	playingSequences[playID]:reset()
+
 	assert(playingSequences[playID], "Attempt to stop tween sequence that isn't running")
 	playingSequences[playID] = nil
 end
@@ -39,7 +41,7 @@ function mod.updateSequence(playId)
 	local motor = binding.motor
 	
 	local key = sequence[currentSequenceIndex]
-	--print("KEY; ", key)
+	-- print("KEY; ", key)
 	if not key then
 		binding.AtEndOfSequence = true
 		return
@@ -112,7 +114,6 @@ end
 if RunService:IsClient() then
 	RunService.RenderStepped:Connect(function()
 		for playId, binding in pairs(playingSequences) do
-			print(playId)
 			mod.updateSequence(playId)
 		end
 	end)
