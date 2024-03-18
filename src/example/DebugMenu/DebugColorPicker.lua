@@ -266,34 +266,36 @@ I:Stateful(P()
 	:Render(render)
 )
 
-RunService.RenderStepped:Connect(function()
-	if grabbed then
-		if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-			grabbed = nil
-		else
-			local wheel = grabbed.WheelRef:getValue()
-			if not wheel then
+if UserInputService:IsClient() then
+	RunService.RenderStepped:Connect(function()
+		if grabbed then
+			if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
 				grabbed = nil
 			else
-				local center = wheel.AbsolutePosition + wheel.AbsoluteSize/2
-				local mousePosition = UserInputService:GetMouseLocation() - GuiService:GetGuiInset()
-				
-				local delta = center - mousePosition
-				
-				local s = math.min(delta.Magnitude / wheel.AbsoluteSize.X * 2, 1)
-				local angle = math.atan2(-delta.X, delta.Y)
-				local h = angle % (math.pi * 2) / (math.pi * 2)
+				local wheel = grabbed.WheelRef:getValue()
+				if not wheel then
+					grabbed = nil
+				else
+					local center = wheel.AbsolutePosition + wheel.AbsoluteSize/2
+					local mousePosition = UserInputService:GetMouseLocation() - GuiService:GetGuiInset()
+					
+					local delta = center - mousePosition
+					
+					local s = math.min(delta.Magnitude / wheel.AbsoluteSize.X * 2, 1)
+					local angle = math.atan2(-delta.X, delta.Y)
+					local h = angle % (math.pi * 2) / (math.pi * 2)
 
-				local _, _, v = grabbed.props.Color:getValue():ToHSV()
-				
-				h, s, v = constrainValue(h, 0, 1, 0.001), constrainValue(s, 0, 1, 0.001), constrainValue(v, 0, 1, 0.001)
-				
-				local color = Color3.fromHSV(h, s, v)
-				
-				grabbed.UpdateColor(color)
+					local _, _, v = grabbed.props.Color:getValue():ToHSV()
+					
+					h, s, v = constrainValue(h, 0, 1, 0.001), constrainValue(s, 0, 1, 0.001), constrainValue(v, 0, 1, 0.001)
+					
+					local color = Color3.fromHSV(h, s, v)
+					
+					grabbed.UpdateColor(color)
+				end
 			end
 		end
-	end
-end)
+	end)
+end
 
 return ColorPicker
