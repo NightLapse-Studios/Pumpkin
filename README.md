@@ -26,8 +26,8 @@ local Roact, RoactRbx = Pumpkin.Roact, Pumpkin.RoactRbx
 
 -- creation
 I:ImageButton(P()
-	-- No need to type ` = Color3.new(...),`
-	-- You can also pass in a color3 or a binding.
+	-- No need to type `Color3.new(...),`
+	-- You can also pass in a color3 or binding.
 	:BackgroundColor3(1, 0, 0)
 	:Activated(function()
 		print("Clicked!")
@@ -60,7 +60,7 @@ pulse.update(0.5)
 ```
 Next, it's easier than ever to know externally when a binding updates:
 ```lua
--- Note self is not passed in
+-- Note, self is not passed in.
 local disconnect_func = pulse.subscribe(function(newPulseValue)
 	
 end)
@@ -105,9 +105,9 @@ So essentially, Pumpkin Tweens are bindings with a sequence of animation steps. 
 Constructing props through the builder pattern lets us put names on our ways of setting props:
 ```lua
 I:Frame(P()
-	 -- Center the UI withing its parent
+	 -- Center the UI within its parent
 	:Center()
-	-- Position it 5 pixels away from the right side of its parent
+	-- Position it 5 pixels away from the left side of its parent, (overwriting the :Center() call above)
 	:JustifyLeft(0, 5)
 	:Invisible()
 	-- Propset modifiers can do a lot more than modify props
@@ -139,7 +139,7 @@ end)
 		--etc
 	)
 
-	-- OR: We add them to the PropSet via the same function, and they are moved to the elemeent when the PropSet is processed
+	-- OR: We add them to the PropSet via the same function, and they are moved to the element when the PropSet is processed
 	I:Frame(P()
 		:Children(
 			--etc
