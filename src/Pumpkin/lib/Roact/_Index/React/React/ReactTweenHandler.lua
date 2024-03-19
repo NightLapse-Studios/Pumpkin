@@ -24,10 +24,12 @@ function mod.stopSequence(playID)
 		return
 	end
 
-	playingSequences[playID]:reset()
+	local binding = playingSequences[playID]
+	binding:reset()
 
-	assert(playingSequences[playID], "Attempt to stop tween sequence that isn't running")
+	assert(binding, "Attempt to stop tween sequence that isn't running")
 	playingSequences[playID] = nil
+	binding.PlayID = false
 end
 
 function mod.updateSequence(playId)

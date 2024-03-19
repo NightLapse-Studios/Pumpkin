@@ -266,7 +266,7 @@ I:Stateful(P()
 	:Render(render)
 )
 
-if UserInputService:IsClient() then
+if RunService:IsClient() then
 	RunService.RenderStepped:Connect(function()
 		if grabbed then
 			if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
