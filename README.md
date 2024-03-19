@@ -1,13 +1,18 @@
 # Pumpkin
-Pumpkin is a UI library that wraps Roact in order to make improvements on features and syntax. With that said, it is highly recommended you understand developing with Roact before Pumpkin, but most people will find Pumpkin both easier and more useful.
+Pumpkin is a UI library that wraps Roact and Flipper to achieve better expressiveness and ease of writing components. It is highly recommended you understand developing with Roact before Pumpkin since it is built on Roact.
 
-For working examples, check out the children of src/example/DebugMenu, such as [DebugCheckBox](DebugCheckBox.lua). For many, reading [Pumpkin](Pumpkin.lua) is a doable way to learn most of the library.
+For working examples, check out the children of src/example/DebugMenu, such as [DebugCheckBox](src/example/DebugMenu/DebugCheckBox.lua), and most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua)
 
 ### Main Attractions
-1) Short Syntax/Builder Pattern
-1) Improved Bindings/Tweens
-1) Custom PropSet Modifiers
-1) Other/Utility
+* Short Syntax/Builder Pattern
+* Improved Bindings
+* Flipper is available through bindings directly
+* Custom PropSet Modifiers
+* Props receive datatype arguments instead of the datatype directly
+* Other/Utility
+
+## Installation
+Place the `src/Pumpkin` folder in your project and require it. The source code is the release.
 
 ### Short Syntax/Builder Pattern
 
@@ -16,61 +21,69 @@ For working examples, check out the children of src/example/DebugMenu, such as [
 local Pumpkin = require(game.ReplicatedFirst.Pumpkin)
 local I, P = Pumpkin, Pumpkin.P
 
+-- Roact 17 and Roact legacy modules are available, just in case
+local Roact, RoactRbx = Pumpkin.Roact, Pumpkin.RoactRbx
+
 -- creation
 I:ImageButton(P()
-	:BackgroundColor3(1, 0, 0)-- You can also pass in a color3 value or a binding.
+	-- No need to type ` = Color3.new(...),`
+	-- You can also pass in a color3 or a binding.
+	:BackgroundColor3(1, 0, 0)
 	:Activated(function()
 		print("Clicked!")
 	end)
 ):Children(
 	-- more elements
 )
-```
-What is this? Some of you may recognize this as the popular "builder pattern" in programming, and thats just what it is. We have said we want to make an `I:ImageButton()`, but we also want to give it properties. So, we constructed a table of `P`roperties via `P()`, then we defined the property `BackgroundColor3` to be red, and then we defined the event property `Activated`, so that we `print("Clicked!")` anytime the button is clicked/tapped/etc. And finally we pass that table into the creation function of the ImageButton (more on this last step below). The attraction to the builder pattern (especially over table declerations) is that the code reads left to right, top to bottom, *and* it's interpreted that way too.
 
-UI is often thought of as a tree, and as such is coded like one. This is for good reason, the parents/children of instances are easily assigned and can be easily seen. To keep short syntax and the famous builder pattern all while visually appearing as a tree, the library takes advantage of the fact that arguments too a function must be executed before the function. So, in the above example, the properties are defined first, and then passed into the creation funciton.
+-- Equivalent to:
+Roact.createElement("ImageButton", {
+	BackgroundColor3 = Color3.new(1, 0, 0),
+	[Roact.Event.Activated] = function()
+		print("Clicked!")
+	end,
+}, {
+	-- more elements
+})
+```
 
 
 ### Improved Bindings/Tweens
-
-
 
 For starters, bindings no longer *have* to be updated via their second return value:
 ```lua
 local pulse, updPulse = I:Binding(0)
 
-updPulse(0.5) -- Cool, but more hastle when storing bindings.
-
-pulse.update(1) -- "Let the binding be free."
+-- Equivalent:
+updPulse(0.5)
+pulse.update(0.5)
 ```
 Next, it's easier than ever to know externally when a binding updates:
 ```lua
-local pulse = I:Binding(0)
-
--- again, "Let the binding be free."
-pulse:subscribe(function(newPulseValue)
+-- Note self is not passed in
+local disconnect_func = pulse.subscribe(function(newPulseValue)
 	
 end)
 ```
 
-And finally, when joining bindings, everything goes. Mostly useful for general purpose UI components, we no longer have to check if passed in props are bindings or pure values. Let me show you:
+And finally, when joining bindings, everything goes. Mostly useful for general purpose UI components, we no longer have to check if passed in props are bindings or pure values:
 ```lua
 local pulse = I:Binding(0)
 local pulse2 = 0.5
 
 I:JoinBindings({pulse, pulse2}):map(function(table)
-	local pulseValue = table[1]--0
-	local pulseValue2 = table[2]--0.5
+	local pulseValue = table[1]		--0
+	local pulseValue2 = table[2]	--0.5
 end)
 ```
 
-## **Anyway, Tweens.**
 
+## Tweens
 
-Any one of these three improvements may be helpful for practiced Roact developers, but now on to the *REAL* stuff... Tweens! Pumpkin Tweens are implemented as an extension to bindings and use Flippers UI Animation Library, they start playing when they are mounted. For detailed usage, read the comment at the top of [Pumpkin](Pumpkin.lua). Heres the rundown:
+Pumpkin Tweens are implemented as an extension to bindings and use Flippers UI Animation Library, they start playing when they are attached to an instance, and reset to the beginning when unattached. A tween with no sequences will start playing once sequences have been added to it, which is what you should do if you don't want your tween to play until you tell it to. For detailed usage, read the comment at the top of [Pumpkin](src/Pumpkin/init.lua). Here's the rundown:
 
 ```lua
--- define a tween at 0 (default start value)
+-- define a tween with value 0 (default start value)
 -- spring to 1 with speed of 2 and damping of 1.3, go back to 0, wait half a second, repeat this forever
 local pulse = I:Tween():spring(1, 2, 1.3):instant(0):pause(0.5):repeatAll(-1)
 
@@ -84,42 +97,59 @@ I:ImageButton(P()
 )
 ```
 
-So essentially, Pumpkin Tweens are bindings with a sequence of animation steps. As you can see, despite the complex nature of this tween, the syntax remains relatively short. The animation sequence can be defined or changed at *anytime* too. You can read more about other functions related to tweens at the top of [Pumpkin](Pumpkin.lua). You can also find more examples there.
+So essentially, Pumpkin Tweens are bindings with a sequence of animation steps. As you can see, despite the complex nature of this tween, the syntax remains relatively short. The animation sequence can be defined or changed at *any time* too. You can read more about other functions related to tweens at the top of [Pumpkin](src/Pumpkin/init.lua). You can also find more examples there.
 
 
+## Custom PropSet Modifiers
 
-### Custom PropSet Modifiers
-
-
-Because the table of properties relating to a ui element is defined via the builder pattern, take a look at this neat capability:
+Constructing props through the builder pattern lets us put names on our ways of setting props:
 ```lua
 I:Frame(P()
+	 -- Center the UI withing its parent
 	:Center()
+	-- Position it 5 pixels away from the right side of its parent
+	:JustifyLeft(0, 5)
+	:Invisible()
+	-- Propset modifiers can do a lot more than modify props
+	-- This example involves inserting children into the props as well, a UIAspectRatioConstraint
+	:AspectRatioProp(1/3)
 )
 ```
 
-Simple. How often do you need a ui element at AnchorPoint `Vector2.new(0.5, 0.5)` and Position `UDim2.fromScale(0.5, 0.5)`? All the time. You can find the definition of the `:Center()` modifier in [Pumpkin](Pumpkin.lua). But *if* we were to implement it ourselves... well we could put it right into [Pumpkin](Pumpkin.lua) no problem. Or, we could do this:
+All PropSet modifiers can be found in [Pumpkin](src/Pumpkin/init.lua) under the `PropSet` table. But we can also define custom modifiers elsewhere, to be used in the same way
 ```lua
 I:RegisterModifier("Center", function(props)
 	props:AnchorPoint(0.5, 0.5)
 	props:Position(0.5, 0, 0.5, 0)
 end)
 ```
-Not too crazy, but pretty nice. There's much more pre-defined custom modifiers in [Pumpkin](Pumpkin.lua). Some of which include 
-`:RoundCorners(scale, pixels)`
-`:Border(thick, color)`
-`:Invisible()`
-`:AspectRatioProp(ratio)`
-`:MoveBy(xs, xo, ys, yo)`
-`:Inset(scaling, spacing)`
 
 
-### Other/Utility/Notes
+## Misc
 
-* [DebugMenu](DebugMenu.lua) for a fully fledged client and server debug menu with sliders (with expression parser), color pickers, plotting, checkboxes, and textboxes.
-* You can define Attributes to the propset like so `:Attribute("AttributeName", value/binding)`.
-* The Roact Type table has been exposed, though rarely necessary, it would be used like this: `local isBinding = pulse[Roact.Type] == Roact.Type.Binding`.
-* Stateful creation is like so:
+* [DebugMenu](src/example/DebugMenu/init.lua) for a fully fledged client and server debug menu with sliders, color pickers, plotting, checkboxes, and textboxes.
+* You can define Instance Attributes to the PropSet like so `:Attribute("AttributeName", value/binding)`.
+* The Roact Type table has been exposed, though rarely necessary, it would be used like this: `local isBinding = pulse["$$typeof"] == Roact.Type.Binding`.
+* Roact elements fall back to pumpkin prop sets:
+	```lua
+	-- We are adding childrent directly to a roact element's props
+	I:Frame(P()
+		
+	):Children(
+		--etc
+	)
+
+	-- OR: We add them to the PropSet via the same function, and they are moved to the elemeent when the PropSet is processed
+	I:Frame(P()
+		:Children(
+			--etc
+		)
+	)
+
+	-- Works as if it was made through pumpkin
+	Roact.createElement("Frame"):JustifyLeft(0, 1)
+	```
+* Roact.component.extend() has been abstracted slightly:
 	```lua
 	I:Stateful(P()
 		:Name("MyStateful")
@@ -130,10 +160,9 @@ Not too crazy, but pretty nice. There's much more pre-defined custom modifiers i
 		-- etc
 	)
 	
-	-- creation
+	-- Once a stateful component is created, it can be instanced by name
 	I:MyStateful()
 	```
-* Trying to use custom propset/elements/statefuls before their creation will result in a timeout yield that waits for the creation.
 * Custom Elements can be created and used like so:
 	```lua
 	I:NewElement("MyElement", I:Frame(P()
@@ -151,83 +180,42 @@ Not too crazy, but pretty nice. There's much more pre-defined custom modifiers i
 		--etc
 	)
 	```
-* Custom Props for Custom Elements and Statefuls: `propSet:Prop(name, value)`
-* More ports exist in [Pumpkin](Pumpkin.lua), such as Refs, Portals, and Change Events.
+* Trying to use custom PropSet/elements/statefuls before their creation will result in a timeout yield that waits for the creation (plays nicely with frameworks that have execution models, but results in a *delayed* error in unyieldable code).
+* Custom Props for function elements and stateful components: `propSet:Prop(name, value)`
+* More wrappers exist in [Pumpkin](src/Pumpkin/init.lua), such as Refs, Portals, and Change Events.
 * There exists `I:IsPositionInObject`, `I:IsScrollBarAtEnd`.
 * `PropSet:ScaledTextGroup` is the better TextScaled that works with multiple TextLabels instead of just one.
-* `PropSet:Line(fromPos, toPos, thickness)` is an advanced custom modifier that *just works*, positions being interpreted in the same relativity as the  `Position` property of the UI element.
-* Due to the functional nature of the syntax, how you write can be very different from anyone else, yet it always ends up readable. Lets look at 2 examples.
+* `PropSet:Line(fromPos: UDim2, toPos: UDim2, thickness: number)` is an advanced custom modifier that *just works* with positions relative the  `Position` property of the UI element.
+* `propSet:Run()` exists to maintain the tree structure of the code by offering in-tree custom modifiers that may be too niche to deserve a full on RegisteredModifier. The classic example is conditionals, without :Run, you may constantly be scrolling up and down leaving the tree to perform logic and then coming back.
+	```lua
+	-- Conditionally set props without bindings
+	local function createFrame(disabled: boolean)
+		local props = P():Center()
+		
+		if disabled then
+			props:BackgroundTransparency(0.7)
+			props:BackgroundColor3(--[[Some disabled color]])
+		else
+			props:BackgroundTransparency(0)
+			props:BackgroundColor3(--[[Some enabled color]])
+		end
 
-	* Example 1, `propSet:Run()` exists to maintain the tree structure of the code by offering in-tree custom modifiers that may be too niche to deserve a full on RegisteredModifier. The classic example is conditionals, without :Run, you may constantly be scrolling up and down leaving the tree to perform logic and then coming back.
-		```lua
-		-- rather simple, and would be better to store a variable
-		local function createFrame(disabled: boolean)
-			local transparecy = disabled and 0.7 or 0-- works and is better, but, for sake of example:
-			
-			return I:Frame(P()
-				:Center()
-				:Size(1, 0, 1, 0)
-				:Run(function(propSet)
-					if disabled then
-						propSet:BackgroundTransparency(0.7)
-					else
-						propSet:BackgroundTransparency(0)
-					end
-				end)
-				:BackgroundColor3(0,0,0)
-			)
-		end
-		
-		-- OR
-		
-		local function assignTransparency(propSet, disabled)
-			if disabled then
-				propSet:BackgroundTransparency(0.7)
-			else
-				propSet:BackgroundTransparency(0)
-			end
-		end
-		
-		local function createFrame(disabled: boolean)
-			return I:Frame(P()
-				:Center()
-				:Size(1, 0, 1, 0)
-				:Run(assignTransparency, disabled)
-				:BackgroundColor3(0,0,0)
-			)
-		end
-		
-		-- OR even, no :Run and no Tree structure:
-		
-		local function createFrame(disabled: boolean)
-			local propSet = P()
-			propSet:Center()
-			propSet:Size(1, 0, 1, 0)
-			
-			if disabled then
-				propSet:BackgroundTransparency(0.7)
-			else
-				propSet:BackgroundTransparency(0)
-			end
-			
-			propSet:BackgroundColor3(0,0,0)
-			
-			return I:Frame(propSet)
-		end
-		```
-	* Example 2: Children.
-		```lua
-		I:Frame(P()
-			
-		):Children(
-			--etc
+		return I:Frame(props)
+	end
+
+	-- Now do it without destructuring the tree
+	local function createFrame(disabled: boolean)
+		return I:Frame(P()
+			:Center()
+			:Run(function(props)
+				if disabled then
+					props:BackgroundTransparency(0.7)
+					props:BackgroundColor3(--[[Some disabled color]])
+				else
+					props:BackgroundTransparency(0)
+					props:BackgroundColor3(--[[Some enabled color]])
+				end
+			end)
 		)
-		
-		-- OR
-		
-		I:Frame(P()
-			:Children(
-				--etc
-			)
-		)
-		```
+	end
+	```
