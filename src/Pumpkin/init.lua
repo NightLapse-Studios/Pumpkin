@@ -1,7 +1,9 @@
+--!strict
+--!native
 --[[
 	Tweens:
 			Tweens play when they are mounted, they are an extension to bindings.
-			If they are unmounted, their motor still runs, but the sequence will not advance to the next step until mounted again.
+			If they are unmounted, their motor stops and sequence resets.
 
 			@param start default 0, should be a number
 			@return a tween sequence for chain definitions
@@ -84,7 +86,7 @@ local function decodeColors(...)
 	
 	if type(args[1]) == "number" then
 		if #args == 3 then
-			return Color3.new(args[1], args[2], args[3])
+			return Color3.new(...)
 		else
 			local seq = {}
 			
@@ -122,11 +124,11 @@ local function decodeUDims(...)
 	local args = {...}
 	
 	if #args == 4 then
-		return UDim2.new(args[1], args[2], args[3], args[4])
+		return UDim2.new(...)
 	elseif #args == 2 then
-		return UDim.new(args[1], args[2])
+		return UDim.new(...)
 	else
-		return args[1]
+		return ...
 	end
 end
 
