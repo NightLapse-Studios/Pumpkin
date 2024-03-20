@@ -1,7 +1,7 @@
 # Pumpkin
 Pumpkin is a UI library that wraps Roact and Flipper to achieve better expressiveness and ease of writing components. It is highly recommended you understand developing with Roact before Pumpkin since it is built on Roact.
 
-For working examples, check out the children of src/example/DebugMenu, such as [DebugCheckBox](src/example/DebugMenu/DebugCheckBox.lua), and most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua)
+For working examples, check out the children of [src/example/DebugMenu](src/example/DebugMenu/init.lua), such as [DebugCheckBox](src/example/DebugMenu/DebugCheckBox.lua), and most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua)
 
 ### Main Attractions
 * Short Syntax/Builder Pattern
