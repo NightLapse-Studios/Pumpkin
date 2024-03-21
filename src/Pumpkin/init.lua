@@ -64,456 +64,51 @@ local mod = {
 	RoactRbx = RoactRbx
 }
 
-setmetatable(mod, {
-	__index = function(t, index)
-		return function(...)
-			local total = 0
-			repeat total += task.wait() until (rawget(t, index) or total > 1)
-			
-			if not rawget(t, index) then
-				r = debug.traceback()
-				error(index .. " is not registered")
-			end
-			
-			return rawget(t, index)(...)
-		end
-	end
-})
-
--- differentiate between color3 and colorSequence
-local function decodeColors(...)
-	local args = {...}
-	
-	if type(args[1]) == "number" then
-		if #args == 3 then
-			return Color3.new(...)
-		else
-			local seq = {}
-			
-			for i = 1, #args, 2 do
-				table.insert(seq, ColorSequenceKeypoint.new(args[i], args[i + 1]))
-			end
-			
-			return ColorSequence.new(seq)
-		end
-	else
-		-- Color3 was passed in
-		return args[1]
-	end
-end
-
--- differentiate between float and float sequence
-local function decodeNumbers(...)
-	local args = {...}
-	
-	if #args == 1 then
-		return args[1]
-	else
-		local seq = {}
-		
-		for i = 1, #args, 3 do
-			table.insert(seq, NumberSequenceKeypoint.new(args[i], args[i + 1], args[i + 3]))
-		end
-		
-		return NumberSequence.new(seq)
-	end
-end
-
--- differentiate between UDim2 and UDim
-local function decodeUDims(...)
-	local args = {...}
-	
-	if #args == 4 then
-		return UDim2.new(...)
-	elseif #args == 2 then
-		return UDim.new(...)
-	else
-		return ...
-	end
-end
-
-local TypeBindings = {
-	Vector2 = Vector2.new,
-	Vector3 = Vector3.new,
-	Rect = Rect.new,
-	
-	-- Some classes have the same property names as other classes, but different types.
-	-- we have to treat them as if they are the same type, and interpret the paramaters to differentiate bettwen types.
-	ColorSequence = decodeColors,
-	Color3 = decodeColors,
-	
-	float = decodeNumbers,
-	NumberSequence = decodeNumbers,
-	
-	UDim = decodeUDims,
-	UDim2 = decodeUDims,
-	
-	-- just for clarity, servers no interpretation purpose in the code.
-	bool = "primitive",
-	int = "primitive",
-	string = "primitive",
-	Content = "primitive",
-	
-	GuiObject = "reference",
-	Instance = "reference",
-	LocalizationTable = "reference",
-	
-	-- Roact.Event
-	Event = "Event",
-	
-	-- overwritten below to functions that support strings
-	[Enum.SelectionBehavior] = "Enum",
-	[Enum.BorderMode] = "Enum",
-	[Enum.SizeConstraint] = "Enum",
-	[Enum.FrameStyle] = "Enum",
-	[Enum.ResamplerMode] = "Enum",
-	[Enum.ScaleType] = "Enum",
-	[Enum.AutomaticSize] = "Enum",
-	[Enum.ElasticBehavior] = "Enum",
-	[Enum.ScrollingDirection] = "Enum",
-	[Enum.ScrollBarInset] = "Enum",
-	[Enum.VerticalScrollBarPosition] = "Enum",
-	[Enum.TextTruncate] = "Enum",
-	[Enum.TextXAlignment] = "Enum",
-	[Enum.TextYAlignment] = "Enum",
-	[Enum.AspectType] = "Enum",
-	[Enum.DominantAxis] = "Enum",
-	[Enum.FillDirection] = "Enum",
-	[Enum.HorizontalAlignment] = "Enum",
-	[Enum.SortOrder] = "Enum",
-	[Enum.VerticalAlignment] = "Enum",
-	[Enum.StartCorner] = "Enum",
-	[Enum.EasingDirection] = "Enum",
-	[Enum.EasingStyle] = "Enum",
-	[Enum.TableMajorAxis] = "Enum",
-	[Enum.ApplyStrokeMode] = "Enum",
-	[Enum.LineJoinMode] = "Enum",
-	[Enum.ZIndexBehavior] = "Enum",
-}
-
-for enum, v in TypeBindings do
-	if v == "Enum" then
-		TypeBindings[enum] = function(arg)
-			if type(arg) == "userdata" then
-				-- Enum passed directly
-				return arg
-			else
-				-- string passed
-				return enum[arg]
-			end
-		end
-	end
-end
-
-local Classes = {
-	GuiButton = {
-		AutoButtonColor = "bool",
-		Modal = "bool",
-		Selected = "bool",
-		Style = "Enum"
-	},
-	GuiBase2d = {
-		Name = "string",
-		AutoLocalize = "bool",
-		RootLocalizationTable = "LocalizationTable",
-		SelectionBehaviorDown = Enum.SelectionBehavior,
-		SelectionBehaviorLeft = Enum.SelectionBehavior,
-		SelectionBehaviorRight = Enum.SelectionBehavior,
-		SelectionBehaviorUp = Enum.SelectionBehavior,
-		SelectionGroup = "bool"
-	},
-	GuiObject = {
-		SelectionImageObject = "GuiObject",
-		ClipsDescendants = "bool",
-		Draggable = "bool",
-		Active = "bool",
-		AnchorPoint = "Vector2",
-		AutomaticSize = Enum.AutomaticSize,
-		BackgroundColor3 = "Color3",
-		BackgroundTransparency = "float",
-		BorderColor3 = "Color3",
-		BorderMode = Enum.BorderMode,
-		BorderSizePixel = "int",
-		LayoutOrder = "int",
-		Position = "UDim2",
-		Rotation = "float",
-		Size = "UDim2",
-		SizeConstraint = Enum.SizeConstraint,
-		Transparency = "float",
-		Visible = "bool",
-		ZIndex = "int",
-		NextSelectionDown = "GuiObject",
-		NextSelectionLeft = "GuiObject",
-		NextSelectionRight = "GuiObject",
-		NextSelectionUp = "GuiObject",
-		Selectable = "bool",
-		SelectionOrder = "int",
-		Activated = "Event",
-		MouseButton1Click = "Event",
-		MouseButton1Down = "Event",
-		MouseEnter = "Event",
-		MouseLeave = "Event",
-		MouseButton1Up = "Event",
-		MouseButton2Click = "Event",
-		MouseButton2Down = "Event",
-		MouseButton2Up = "Event",
-		InputBegan = "Event",
-		InputEnded = "Event",
-		InputChanged = "Event",
-		TouchLongPress = "Event",
-		TouchPan = "Event",
-		TouchPinch = "Event",
-		TouchRotate = "Event",
-		TouchSwipe = "Event",
-		TouchTap = "Event",
-	},
-	CanvasGroup = {
-		GroupColor3 = "Color3",
-		GroupTransparency = "float"
-	},
-	Frame = {
-
-	},
-	ScreenGui = {
-		DisplayOrder = "int",
-		Enabled = "bool",
-		IgnoreGuiInset = "bool",
-		ResetOnSpawn = "bool",
-		ZIndexBehavior = Enum.ZIndexBehavior,
-	},
-	BillboardGui = {
-		Adornee = "Instance",
-		AlwaysOnTop = "bool",
-		LightInfluence = "float",
-		Size = "UDim2",
-		SizeOffset = "Vector2",
-		StudsOffset = "Vector3",
-		ExtentsOffsetWorldSpace = "Vector3",
-		MaxDistance = "float",
-	},
-	ImageButton = {
-		HoverImage = "Content",
-		Image = "Content",
-		ImageColor3 = "Color3",
-		ImageRectOffset = "Vector2",
-		ImageRectSize = "Vector2",
-		ImageTransparency = "float",
-		PressedImage = "Content",
-		ResampleMode = Enum.ResamplerMode,
-		ScaleType = Enum.ScaleType,
-		SliceCenter = "Rect",
-		SliceScale = "float",
-		TileSize = "UDim2"
-	},
-	TextButton = {
-		Font = "Font",
-		FontFace = "Font",
-		LineHeight = "float",
-		MaxVisibleGraphemes = "int",
-		RichText = "bool",
-		Text = "string",
-		TextColor3 = "Color3",
-		TextScaled = "bool",
-		TextSize = "float",
-		TextStrokeColor3 = "Color3",
-		TextStrokeTransparency = "float",
-		TextTransparency = "float",
-		TextTruncate = Enum.TextTruncate,
-		TextWrapped = "bool",
-		TextXAlignment = Enum.TextXAlignment,
-		TextYAlignment = Enum.TextYAlignment
-	},
-	ImageLabel = {
-		Image = "Content",
-		ImageColor3 = "Color3",
-		ImageRectOffset = "Vector2",
-		ImageRectSize = "Vector2",
-		ImageTransparency = "float",
-		ResampleMode = Enum.ResamplerMode,
-		ScaleType = Enum.ScaleType,
-		SliceCenter = "Rect",
-		SliceScale = "float",
-		TileSize = "UDim2"
-	},
-	TextLabel = {
-		Font = "Font",
-		FontFace = "Font",
-		LineHeight = "float",
-		MaxVisibleGraphemes = "int",
-		RichText = "bool",
-		Text = "string",
-		TextColor3 = "Color3",
-		TextScaled = "bool",
-		TextSize = "float",
-		TextStrokeColor3 = "Color3",
-		TextStrokeTransparency = "float",
-		TextTransparency = "float",
-		TextTruncate = Enum.TextTruncate,
-		TextWrapped = "bool",
-		TextXAlignment = Enum.TextXAlignment,
-		TextYAlignment = Enum.TextYAlignment
-	},
-	ScrollingFrame = {
-		AutomaticCanvasSize = Enum.AutomaticSize,
-		BottomImage = "Content",
-		CanvasPosition = "Vector2",
-		CanvasSize = "UDim2",
-		ElasticBehavior = Enum.ElasticBehavior,
-		HorizontalScrollBarInset = Enum.ScrollBarInset,
-		MidImage = "Content",
-		ScrollBarImageColor3 = "Color3",
-		ScrollBarImageTransparency = "float",
-		ScrollBarThickness = "int",
-		ScrollingDirection = Enum.ScrollingDirection,
-		ScrollingEnabled = "bool",
-		TopImage = "Content",
-		VerticalScrollBarInset = Enum.ScrollBarInset,
-		VerticalScrollBarPosition = Enum.VerticalScrollBarPosition
-	},
-	TextBox = {
-		ClearTextOnFocus = "bool",
-		CursorPosition = "int",
-		MultiLine = "bool",
-		SelectionStart = "int",
-		ShowNativeInput = "bool",
-		TextEditable = "bool",
-		Font = "Font",
-		FontFace = "Font",
-		LineHeight = "float",
-		MaxVisibleGraphemes = "int",
-		PlaceholderColor3 = "Color3",
-		PlaceholderText = "string",
-		RichText = "bool",
-		Text = "string",
-		TextColor3 = "Color3",
-		TextScaled = "bool",
-		TextSize = "float",
-		TextStrokeColor3 = "Color3",
-		TextStrokeTransparency = "float",
-		TextTransparency = "float",
-		TextTruncate = Enum.TextTruncate,
-		TextWrapped = "bool",
-		TextXAlignment = Enum.TextXAlignment,
-		TextYAlignment = Enum.TextYAlignment,
-		FocusLost = "Event",
-		Focused = "Event",
-		ReturnPressedFromOnScreenKeyboard = "Event"
-	},
-	VideoFrame = {
-		Looped = "bool",
-		Playing = "bool",
-		TimePosition = "float",
-		Video = "Content",
-		Volume = "float",
-		DidLoop = "Event",
-		Ended = "Event",
-		Loaded = "Event",
-		Paused = "Event",
-		Played = "Event"
-	},
-	ViewportFrame = {
-		Ambient = "Color3",
-		LightColor = "Color3",
-		LightDirection = "Vector3",
-		CurrentCamera = "Camera",
-		ImageColor3 = "Color3",
-		ImageTransparency = "float"
-	},
-
-	UIGradient = {
-		Color = "ColorSequence",
-		Enabled = "bool",
-		Offset = "Vector2",
-		Rotation = "float",
-		Transparency = "NumberSequence"
-	},
-	UICorner = {
-		CornerRadius = "UDim",
-	},
-	UITextSizeConstraint = {
-		MaxTextSize = "int",
-		MinTextSize = "int",
-	},
-	UISizeConstraint = {
-		MaxSize = "Vector2",
-		MinSize = "Vector2",
-	},
-	UIAspectRatioConstraint = {
-		AspectRatio = "float",
-		AspectType = Enum.AspectType,
-		DominantAxis = Enum.DominantAxis,
-	},
-	UIGridStyleLayout = {
-		FillDirection = Enum.FillDirection,
-		HorizontalAlignment = Enum.HorizontalAlignment,
-		SortOrder = Enum.SortOrder,
-		VerticalAlignment = Enum.VerticalAlignment,
-	},
-	UIGridLayout = {
-		CellPadding = "UDim2",
-		CellSize = "UDim2",
-		FillDirectionMaxCells = "int",
-		StartCorner = Enum.StartCorner,
-	},
-	UIListLayout = {
-		Padding = "UDim"
-	},
-	UIPageLayout = {
-		Animated = "bool",
-		Circular = "bool",
-		EasingDirection = Enum.EasingDirection,
-		EasingStyle = Enum.EasingStyle,
-		Padding = "UDim",
-		TweenTime = "float",
-		GamepadInputEnabled = "bool",
-		ScrollWheelInputEnabled = "bool",
-		TouchInputEnabled = "bool",
-		PageEnter = "Event",
-		PageLeave = "Event",
-		Stopped = "Event"
-	},
-	UITableLayout = {
-		FillEmptySpaceColumns = "bool",
-		FillEmptySpaceRows = "bool",
-		Padding = "UDim2",
-		MajorAxis = Enum.TableMajorAxis
-	},
-	UIPadding = {
-		PaddingBottom = "UDim",
-		PaddingLeft = "UDim",
-		PaddingRight = "UDim",
-		PaddingTop = "UDim"
-	},
-	UIScale = {
-		Scale = "float"
-	},
-	UIStroke = {
-		ApplyStrokeMode = Enum.ApplyStrokeMode,
-		Color = "Color3",
-		LineJoinMode = Enum.LineJoinMode,
-		Thickness = "float",
-		Transparency = "float",
-		Enabled = "bool"
-	},
-}
-
-
 local PropSet = { }
 
-setmetatable(PropSet, {
-	__index = function(t, index)
-		return function(...)
-			local total = 0
-			repeat total += task.wait() until (rawget(t, index) or total > 1)
+local ASYNC_DEFINITIONS = true
+local ASYNC_WAIT_TIME = 0.2
+
+if ASYNC_DEFINITIONS then
+	--[[
+		The idea is to "break" intermodule dependencies by waiting for unfound indices (which are always functions)
+		We substitute the missing function with one which waits for the expected function
+		For a require tree, you can engineer cases where this stops the dependencies from being resolved
+		so it is recommended your modules
 			
-			if not rawget(t, index) then
-				error(index .. " is not registered")
+		In roblox, task.wait() causes a 1 frame delay
+	]]
+	setmetatable(mod, {
+		__index = function(t, index)
+			return function(...)
+				local total = 0
+				repeat total += task.wait() until (rawget(t, index) or total > ASYNC_WAIT_TIME)
+				
+				if not rawget(t, index) then
+					error(index .. " is not registered")
+				end
+				
+				return rawget(t, index)(...)
 			end
-			
-			return rawget(t, index)(...)
 		end
-	end
-})
+	})
+
+	setmetatable(PropSet, {
+		-- The idea is to break intermodule dependencies by assuming that 
+		__index = function(t, index)
+			return function(...)
+				local total = 0
+				repeat total += task.wait() until (rawget(t, index) or total > ASYNC_WAIT_TIME)
+				
+				if not rawget(t, index) then
+					error(index .. " is not registered")
+				end
+				
+				return rawget(t, index)(...)
+			end
+		end
+	})
+end
 
 local mt_PropSet = { __index = PropSet }
 
@@ -525,6 +120,8 @@ function mod.P()
 	setmetatable(set, mt_PropSet)
 	return set
 end
+
+export type PropSet = typeof(mod.P())
 
 local P = mod.P
 
@@ -909,26 +506,6 @@ function PropSet:Run(func, ...)
 	return self
 end
 
---A small system which allows us to register external functions which modify the props of the element being built
-function mod:RegisterModifier(name, func)
-	assert(PropSet[name] == nil)
-	
-	PropSet[name] = function(self, ...)
-		func(self, ...)
-		return self
-	end
-end
-
-
--- Portal functionality
--- TODO: Test this with react 17 update
-function mod:Portal(children, container, prop_set, opt_key: string?)
-	local props = prop_set.props
-	local element = RoactRbx.createPortal(children, container, props)
-	
-	return element
-end
-
 function PropSet:Target(instance)
 	self.props.target = instance
 	return self
@@ -993,31 +570,19 @@ function PropSet:DidUpdate(func)
 	return self
 end
 
-
-function mod:Binding(default)
-	return Roact.createBinding(default)
+function PropSet:Name(name: string)
+	self.props.Name = name
+	return self
 end
 
-function mod:JoinBindings(bindings)
-	return Roact.joinBindings(bindings)
-end
-
-function mod:CreateRef()
-	return Roact.createRef()
-end
-
-function mod:Mount(tree, parent)
-	local root = RoactRbx.createRoot(parent)
-	root:render(tree)
-
-	return root
-end
-
-function mod:Tween(start)
-	start = start or 0
-
-	local binding, _ = Roact.createBinding(start)
-	return binding:makeTweenable()
+--A small system which allows us to register external functions which modify the props of the element being built
+function mod:RegisterModifier(name, func)
+	assert(PropSet[name] == nil)
+	
+	PropSet[name] = function(self, ...)
+		func(self, ...)
+		return self
+	end
 end
 
 
@@ -1068,6 +633,41 @@ function mod:Element(name, prop_set)
 	return element
 end
 
+function mod:Binding(default)
+	return Roact.createBinding(default)
+end
+
+function mod:JoinBindings(bindings)
+	return Roact.joinBindings(bindings)
+end
+
+function mod:CreateRef()
+	return Roact.createRef()
+end
+
+function mod:Mount(tree, parent)
+	local root = RoactRbx.createRoot(parent)
+	root:render(tree)
+
+	return root
+end
+
+function mod:Tween(start)
+	start = start or 0
+
+	local binding, _ = Roact.createBinding(start)
+	return binding:makeTweenable()
+end
+
+-- Portal functionality
+-- TODO: Test this with react 17 update
+function mod:Portal(children, container, prop_set, opt_key: string?)
+	local props = prop_set.props
+	local element = RoactRbx.createPortal(children, container, props)
+	
+	return element
+end
+
 function mod:IsPositionInObject(position, object: GuiBase2d)
 	local topLeft = object.AbsolutePosition
 	local bottomRight = topLeft + object.AbsoluteSize
@@ -1088,12 +688,440 @@ function mod:IsScrollBarAtEnd(barRBX, damp)
 	return false
 end
 
+local ReactElement = require(script.lib.Roact._Index.React.React.ReactElement)
+ReactElement.__set_pumpkin_mt({__index = PropSet})
+
+
+
+-- Setup the I:<InstanceName> behavior
+-- and the constructors for their props
+
+
+-- differentiate between color3 and colorSequence
+local function decodeColors(...): ColorSequence | Color3
+	local args = {...}
+	
+	if type(args[1]) == "number" then
+		if #args == 3 then
+			return Color3.new(...)
+		else
+			local seq = {}
+			
+			for i = 1, #args, 2 do
+				table.insert(seq, ColorSequenceKeypoint.new(args[i], args[i + 1]))
+			end
+			
+			return ColorSequence.new(seq)
+		end
+	else
+		-- Color3 was passed in
+		return ...
+	end
+end
+
+-- differentiate between float and float sequence
+local function decodeNumbers(...): NumberSequence | number
+	local args = {...}
+	
+	if #args == 1 then
+		return ...
+	else
+		local seq = {}
+		
+		for i = 1, #args, 3 do
+			table.insert(seq, NumberSequenceKeypoint.new(args[i], args[i + 1], args[i + 3]))
+		end
+		
+		return NumberSequence.new(seq)
+	end
+end
+
+-- differentiate between UDim2 and UDim
+local function decodeUDims(...): UDim | UDim2
+	local args = {...}
+	
+	if #args == 4 then
+		return UDim2.new(...)
+	elseif #args == 2 then
+		return UDim.new(...)
+	else
+		return ...
+	end
+end
+
+local function decodeEnum(enum): (string | EnumItem) -> EnumItem
+	return function(arg: string | EnumItem): EnumItem
+		if type(arg) == "userdata" then
+			-- Enum passed directly
+			return arg
+		else
+			-- string passed
+			return enum[arg]
+		end
+	end
+end
+
+local TypeBindings = {
+	Vector2 = Vector2.new,
+	Vector3 = Vector3.new,
+	Rect = Rect.new,
+	
+	-- Some classes have the same property names as other classes, but different types.
+	-- we have to treat them as if they are the same type, and interpret the paramaters to differentiate bettwen types.
+	ColorSequence = decodeColors,
+	Color3 = decodeColors,
+	
+	float = decodeNumbers,
+	NumberSequence = decodeNumbers,
+	
+	UDim = decodeUDims,
+	UDim2 = decodeUDims,
+	
+	-- just for clarity, servers no interpretation purpose in the code.
+	bool = "primitive",
+	int = "primitive",
+	string = "primitive",
+	Content = "primitive",
+	
+	GuiObject = "reference",
+	Instance = "reference",
+	LocalizationTable = "reference",
+	
+	-- Roact.Event
+	Event = "Event",
+	
+	-- overwritten below to functions that support strings
+	[Enum.SelectionBehavior] = decodeEnum(Enum.SelectionBehavior),
+	[Enum.BorderMode] = decodeEnum(Enum.BorderMode),
+	[Enum.SizeConstraint] = decodeEnum(Enum.SizeConstraint),
+	[Enum.FrameStyle] = decodeEnum(Enum.FrameStyle),
+	[Enum.ResamplerMode] = decodeEnum(Enum.ResamplerMode),
+	[Enum.ScaleType] = decodeEnum(Enum.ScaleType),
+	[Enum.AutomaticSize] = decodeEnum(Enum.AutomaticSize),
+	[Enum.ElasticBehavior] = decodeEnum(Enum.ElasticBehavior),
+	[Enum.ScrollingDirection] = decodeEnum(Enum.ScrollingDirection),
+	[Enum.ScrollBarInset] = decodeEnum(Enum.ScrollBarInset),
+	[Enum.VerticalScrollBarPosition] = decodeEnum(Enum.VerticalScrollBarPosition),
+	[Enum.TextTruncate] = decodeEnum(Enum.TextTruncate),
+	[Enum.TextXAlignment] = decodeEnum(Enum.TextXAlignment),
+	[Enum.TextYAlignment] = decodeEnum(Enum.TextYAlignment),
+	[Enum.AspectType] = decodeEnum(Enum.AspectType),
+	[Enum.DominantAxis] = decodeEnum(Enum.DominantAxis),
+	[Enum.FillDirection] = decodeEnum(Enum.FillDirection),
+	[Enum.HorizontalAlignment] = decodeEnum(Enum.HorizontalAlignment),
+	[Enum.SortOrder] = decodeEnum(Enum.SortOrder),
+	[Enum.VerticalAlignment] = decodeEnum(Enum.VerticalAlignment),
+	[Enum.StartCorner] = decodeEnum(Enum.StartCorner),
+	[Enum.EasingDirection] = decodeEnum(Enum.EasingDirection),
+	[Enum.EasingStyle] = decodeEnum(Enum.EasingStyle),
+	[Enum.TableMajorAxis] = decodeEnum(Enum.TableMajorAxis),
+	[Enum.ApplyStrokeMode] = decodeEnum(Enum.ApplyStrokeMode),
+	[Enum.LineJoinMode] = decodeEnum(Enum.LineJoinMode),
+	[Enum.ZIndexBehavior] = decodeEnum(Enum.ZIndexBehavior),
+}
+
+local Classes = {
+	GuiButton = {
+		AutoButtonColor = "bool",
+		Modal = "bool",
+		Selected = "bool",
+		Style = "Enum"
+	},
+	GuiBase2d = {
+		Name = "string",
+		AutoLocalize = "bool",
+		RootLocalizationTable = "LocalizationTable",
+		SelectionBehaviorDown = Enum.SelectionBehavior,
+		SelectionBehaviorLeft = Enum.SelectionBehavior,
+		SelectionBehaviorRight = Enum.SelectionBehavior,
+		SelectionBehaviorUp = Enum.SelectionBehavior,
+		SelectionGroup = "bool"
+	},
+	GuiObject = {
+		SelectionImageObject = "GuiObject",
+		ClipsDescendants = "bool",
+		Draggable = "bool",
+		Active = "bool",
+		AnchorPoint = "Vector2",
+		AutomaticSize = Enum.AutomaticSize,
+		BackgroundColor3 = "Color3",
+		BackgroundTransparency = "float",
+		BorderColor3 = "Color3",
+		BorderMode = Enum.BorderMode,
+		BorderSizePixel = "int",
+		LayoutOrder = "int",
+		Position = "UDim2",
+		Rotation = "float",
+		Size = "UDim2",
+		SizeConstraint = Enum.SizeConstraint,
+		Transparency = "float",
+		Visible = "bool",
+		ZIndex = "int",
+		NextSelectionDown = "GuiObject",
+		NextSelectionLeft = "GuiObject",
+		NextSelectionRight = "GuiObject",
+		NextSelectionUp = "GuiObject",
+		Selectable = "bool",
+		SelectionOrder = "int",
+		Activated = "Event",
+		MouseButton1Click = "Event",
+		MouseButton1Down = "Event",
+		MouseEnter = "Event",
+		MouseLeave = "Event",
+		MouseButton1Up = "Event",
+		MouseButton2Click = "Event",
+		MouseButton2Down = "Event",
+		MouseButton2Up = "Event",
+		InputBegan = "Event",
+		InputEnded = "Event",
+		InputChanged = "Event",
+		TouchLongPress = "Event",
+		TouchPan = "Event",
+		TouchPinch = "Event",
+		TouchRotate = "Event",
+		TouchSwipe = "Event",
+		TouchTap = "Event",
+	},
+	CanvasGroup = {
+		GroupColor3 = "Color3",
+		GroupTransparency = "float"
+	},
+	Frame = {
+		Name = "string"
+	},
+	ScreenGui = {
+		DisplayOrder = "int",
+		Enabled = "bool",
+		IgnoreGuiInset = "bool",
+		ResetOnSpawn = "bool",
+		ZIndexBehavior = Enum.ZIndexBehavior,
+	},
+	BillboardGui = {
+		Adornee = "Instance",
+		AlwaysOnTop = "bool",
+		LightInfluence = "float",
+		Size = "UDim2",
+		SizeOffset = "Vector2",
+		StudsOffset = "Vector3",
+		ExtentsOffsetWorldSpace = "Vector3",
+		MaxDistance = "float",
+	},
+	ImageButton = {
+		HoverImage = "Content",
+		Image = "Content",
+		ImageColor3 = "Color3",
+		ImageRectOffset = "Vector2",
+		ImageRectSize = "Vector2",
+		ImageTransparency = "float",
+		PressedImage = "Content",
+		ResampleMode = Enum.ResamplerMode,
+		ScaleType = Enum.ScaleType,
+		SliceCenter = "Rect",
+		SliceScale = "float",
+		TileSize = "UDim2"
+	},
+	TextButton = {
+		Font = "Font",
+		FontFace = "Font",
+		LineHeight = "float",
+		MaxVisibleGraphemes = "int",
+		RichText = "bool",
+		Text = "string",
+		TextColor3 = "Color3",
+		TextScaled = "bool",
+		TextSize = "float",
+		TextStrokeColor3 = "Color3",
+		TextStrokeTransparency = "float",
+		TextTransparency = "float",
+		TextTruncate = Enum.TextTruncate,
+		TextWrapped = "bool",
+		TextXAlignment = Enum.TextXAlignment,
+		TextYAlignment = Enum.TextYAlignment
+	},
+	ImageLabel = {
+		Image = "Content",
+		ImageColor3 = "Color3",
+		ImageRectOffset = "Vector2",
+		ImageRectSize = "Vector2",
+		ImageTransparency = "float",
+		ResampleMode = Enum.ResamplerMode,
+		ScaleType = Enum.ScaleType,
+		SliceCenter = "Rect",
+		SliceScale = "float",
+		TileSize = "UDim2"
+	},
+	TextLabel = {
+		Font = "Font",
+		FontFace = "Font",
+		LineHeight = "float",
+		MaxVisibleGraphemes = "int",
+		RichText = "bool",
+		Text = "string",
+		TextColor3 = "Color3",
+		TextScaled = "bool",
+		TextSize = "float",
+		TextStrokeColor3 = "Color3",
+		TextStrokeTransparency = "float",
+		TextTransparency = "float",
+		TextTruncate = Enum.TextTruncate,
+		TextWrapped = "bool",
+		TextXAlignment = Enum.TextXAlignment,
+		TextYAlignment = Enum.TextYAlignment
+	},
+	ScrollingFrame = {
+		AutomaticCanvasSize = Enum.AutomaticSize,
+		BottomImage = "Content",
+		CanvasPosition = "Vector2",
+		CanvasSize = "UDim2",
+		ElasticBehavior = Enum.ElasticBehavior,
+		HorizontalScrollBarInset = Enum.ScrollBarInset,
+		MidImage = "Content",
+		ScrollBarImageColor3 = "Color3",
+		ScrollBarImageTransparency = "float",
+		ScrollBarThickness = "int",
+		ScrollingDirection = Enum.ScrollingDirection,
+		ScrollingEnabled = "bool",
+		TopImage = "Content",
+		VerticalScrollBarInset = Enum.ScrollBarInset,
+		VerticalScrollBarPosition = Enum.VerticalScrollBarPosition
+	},
+	TextBox = {
+		ClearTextOnFocus = "bool",
+		CursorPosition = "int",
+		MultiLine = "bool",
+		SelectionStart = "int",
+		ShowNativeInput = "bool",
+		TextEditable = "bool",
+		Font = "Font",
+		FontFace = "Font",
+		LineHeight = "float",
+		MaxVisibleGraphemes = "int",
+		PlaceholderColor3 = "Color3",
+		PlaceholderText = "string",
+		RichText = "bool",
+		Text = "string",
+		TextColor3 = "Color3",
+		TextScaled = "bool",
+		TextSize = "float",
+		TextStrokeColor3 = "Color3",
+		TextStrokeTransparency = "float",
+		TextTransparency = "float",
+		TextTruncate = Enum.TextTruncate,
+		TextWrapped = "bool",
+		TextXAlignment = Enum.TextXAlignment,
+		TextYAlignment = Enum.TextYAlignment,
+		FocusLost = "Event",
+		Focused = "Event",
+		ReturnPressedFromOnScreenKeyboard = "Event"
+	},
+	VideoFrame = {
+		Looped = "bool",
+		Playing = "bool",
+		TimePosition = "float",
+		Video = "Content",
+		Volume = "float",
+		DidLoop = "Event",
+		Ended = "Event",
+		Loaded = "Event",
+		Paused = "Event",
+		Played = "Event"
+	},
+	ViewportFrame = {
+		Ambient = "Color3",
+		LightColor = "Color3",
+		LightDirection = "Vector3",
+		CurrentCamera = "Camera",
+		ImageColor3 = "Color3",
+		ImageTransparency = "float"
+	},
+
+	UIGradient = {
+		Color = "ColorSequence",
+		Enabled = "bool",
+		Offset = "Vector2",
+		Rotation = "float",
+		Transparency = "NumberSequence"
+	},
+	UICorner = {
+		CornerRadius = "UDim",
+	},
+	UITextSizeConstraint = {
+		MaxTextSize = "int",
+		MinTextSize = "int",
+	},
+	UISizeConstraint = {
+		MaxSize = "Vector2",
+		MinSize = "Vector2",
+	},
+	UIAspectRatioConstraint = {
+		AspectRatio = "float",
+		AspectType = Enum.AspectType,
+		DominantAxis = Enum.DominantAxis,
+	},
+	UIGridStyleLayout = {
+		FillDirection = Enum.FillDirection,
+		HorizontalAlignment = Enum.HorizontalAlignment,
+		SortOrder = Enum.SortOrder,
+		VerticalAlignment = Enum.VerticalAlignment,
+	},
+	UIGridLayout = {
+		CellPadding = "UDim2",
+		CellSize = "UDim2",
+		FillDirectionMaxCells = "int",
+		StartCorner = Enum.StartCorner,
+	},
+	UIListLayout = {
+		Padding = "UDim"
+	},
+	UIPageLayout = {
+		Animated = "bool",
+		Circular = "bool",
+		EasingDirection = Enum.EasingDirection,
+		EasingStyle = Enum.EasingStyle,
+		Padding = "UDim",
+		TweenTime = "float",
+		GamepadInputEnabled = "bool",
+		ScrollWheelInputEnabled = "bool",
+		TouchInputEnabled = "bool",
+		PageEnter = "Event",
+		PageLeave = "Event",
+		Stopped = "Event"
+	},
+	UITableLayout = {
+		FillEmptySpaceColumns = "bool",
+		FillEmptySpaceRows = "bool",
+		Padding = "UDim2",
+		MajorAxis = Enum.TableMajorAxis
+	},
+	UIPadding = {
+		PaddingBottom = "UDim",
+		PaddingLeft = "UDim",
+		PaddingRight = "UDim",
+		PaddingTop = "UDim"
+	},
+	UIScale = {
+		Scale = "float"
+	},
+	UIStroke = {
+		ApplyStrokeMode = Enum.ApplyStrokeMode,
+		Color = "Color3",
+		LineJoinMode = Enum.LineJoinMode,
+		Thickness = "float",
+		Transparency = "float",
+		Enabled = "bool"
+	},
+}
+
 local RoactSymbols = Roact.Symbols
 
 -- create :[propName]() functions
 for class, properties in pairs(Classes) do
-	for prop_name, _type in properties do
+	for prop_name: string, _type in properties do
 		local ctor = TypeBindings[_type]
+
+		if typeof(rawget(PropSet, prop_name)) == "function" then
+			continue
+		end
 
 		if type(ctor) == "function" then
 			PropSet[prop_name] = function(_self, binding, ...)
@@ -1133,8 +1161,5 @@ for class, properties in pairs(Classes) do
 		return element
 	end
 end
-
-local ReactElement = require(script.lib.Roact._Index.React.React.ReactElement)
-ReactElement.__set_pumpkin_mt({__index = PropSet})
 
 return mod

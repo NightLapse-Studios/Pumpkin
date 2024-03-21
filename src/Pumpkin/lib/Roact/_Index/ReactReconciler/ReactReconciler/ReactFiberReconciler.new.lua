@@ -335,6 +335,7 @@ exports.updateContainer = function(
 			and not didWarnAboutNestedUpdates
 		then
 			didWarnAboutNestedUpdates = true
+			-- @Pumpkin: we do not care and we will do this
 			console.error(
 				"Render methods should be a pure function of props and state; "
 					.. "triggering nested component updates from render is not allowed. "
