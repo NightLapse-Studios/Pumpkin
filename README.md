@@ -11,6 +11,12 @@ For working examples, check out the children of [src/example/DebugMenu](src/exam
 * Props receive datatype arguments instead of the datatype directly
 * Other/Utility
 
+### Warning
+* This is an in-house tool cleaned up for a public version because it has, in our opinion, been nice to use and demonstrates nice ideas. The proving ground has been in [Clash!](https://www.roblox.com/games/8256020164/Clash-KNIGHT)
+* React features we don't use may be left unwrapped
+* The upgrade to react 17 was done as part of making a public version, so new react features since legacy roact haven't been looked at.
+* Upgrade to react 17 has only been tested on the debug menu example
+
 ## Installation
 Place the `src/Pumpkin` folder in your project library folder and require it. The source code is the release for now, we aren't fancy yet.
 
@@ -156,11 +162,11 @@ local root = I:Mount(I:MyStateful(P()), game.Players.LocalPlayer.PlayerGui.Scree
 
 ## Async dependencies
 
-However we have a nice feature to make it convenient: the `ASYNC_DEFINITIONS` flag.
+However we have a nice feature to make it convenient: the `ASYNC_DEFINITIONS` flag. It is on by default.
 
-While shared functionality just works most of the time, you can engineer cases where dependencies stop the program from ever defining them. This flag will cause shared things to yield with a short timeout if they haven't been declared yet. This too can be thwarted but not easily. The primary tradeoff is a short delay before your error message is printed out...
+While shared functionality just works most of the time, you can engineer cases where dependencies stop the program from ever defining them. This flag will cause access to shared things to yield with a short timeout if they haven't been declared yet. This too can be thwarted but not easily. The primary tradeoff is a short delay before your error message is printed out...
 
-With frameworks that provide an execution model, i.e. callbacks you can define in a module's table to be called at stages of startup, we can treat the module level code as startup code. If you call `RegisterModifier` from only module-level code, and there is any callback you can define which is called once all scripts have been required, then any code in the callback will either have satisfied dependencies, or throw the appropriate error.
+With frameworks that provide an execution model, i.e. callbacks you can define in a module's table to be called at stages of startup, we can treat the module level code as startup code. If you call `RegisterModifier` from only module-level code, and there is any callback you can define which is called once all scripts have been required, then any code in the callback will either have satisfied dependencies, or throw the appropriate error knowing that it is *not* a dependency issue.
 
 ```lua
 -- Script A
@@ -203,7 +209,7 @@ function mod.GameStarted()
 end
 ```
 
-Without the callbacks in the above example, it would still start regardless of require order or if one required the other, but not if you placed the mount statements at the tops of the files.
+Without the callbacks in the above example, it would still start regardless of require order or if one required the other, but not if you placed the `I:MyStateful` & `I:SomeOtherStateful` statements at the tops of the files.
 
 
 ## Misc
