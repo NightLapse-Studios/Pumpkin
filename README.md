@@ -69,7 +69,7 @@ I:JoinBindings({pulse, pulse2}):map(function(table)
 	local pulseValue = table[1]		--0
 	local pulseValue2 = table[2]	--0.5
 end)
-
+```
 
 ## PropSet modifiers
 
@@ -156,7 +156,11 @@ local root = I:Mount(I:MyStateful(P()), game.Players.LocalPlayer.PlayerGui.Scree
 
 ## Async dependencies
 
-While shared functionality just works most of the time, you can engineer cases where dependencies stop the program from ever defining them. However, it plays well with frameworks that provide an execution model i.e. callbacks you can define in a module's table which will be called at stages of startup. If you call `RegisterModifier` from only module-level code, and there is any callback you can define which is called once all scripts have been required, then any code in the callback will either have satisfied dependencies, or throw the appropriate error. The primary tradeoff is a short delay before your error message is printed out..
+However we have a nice feature to make it convenient: the `ASYNC_DEFINITIONS` flag.
+
+While shared functionality just works most of the time, you can engineer cases where dependencies stop the program from ever defining them. This flag will cause shared things to yield with a short timeout if they haven't been declared yet. This too can be thwarted but not easily. The primary tradeoff is a short delay before your error message is printed out...
+
+With frameworks that provide an execution model, i.e. callbacks you can define in a module's table to be called at stages of startup, we can treat the module level code as startup code. If you call `RegisterModifier` from only module-level code, and there is any callback you can define which is called once all scripts have been required, then any code in the callback will either have satisfied dependencies, or throw the appropriate error.
 
 ```lua
 -- Script A
