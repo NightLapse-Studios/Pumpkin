@@ -1,6 +1,9 @@
 --!strict
 --!native
 --[[
+	Module by Ruuuuusty and vijet1
+	TODO: more better comments
+
 	Tweens:
 			Tweens play when they are mounted, they are an extension to bindings.
 			If they are unmounted, their motor stops and sequence resets.
@@ -73,10 +76,13 @@ if ASYNC_DEFINITIONS then
 	--[[
 		The idea is to "break" intermodule dependencies by waiting for unfound indices (which are always functions)
 		We substitute the missing function with one which waits for the expected function
-		For a require tree, you can engineer cases where this stops the dependencies from being resolved
-		so it is recommended your modules
+		Recommended for use in ergonomic frameworks
+		See README for elaboration
 			
-		In roblox, task.wait() causes a 1 frame delay
+		In roblox, task.wait() causes a 1 frame delay that is multiplied by the depth of your dependency tree.
+		In practice, the waiting period is 1 frame if you write appropriate code (get your definitions out of the way
+			early and use your dependencies late, or otherwise use a framework that can prevent dependencies from
+			blocking definitions i.e. Knit)
 	]]
 	setmetatable(mod, {
 		__index = function(t, index)
@@ -94,7 +100,6 @@ if ASYNC_DEFINITIONS then
 	})
 
 	setmetatable(PropSet, {
-		-- The idea is to break intermodule dependencies by assuming that 
 		__index = function(t, index)
 			return function(...)
 				local total = 0
@@ -120,8 +125,6 @@ function mod.P()
 	setmetatable(set, mt_PropSet)
 	return set
 end
-
-export type PropSet = typeof(mod.P())
 
 local P = mod.P
 
@@ -496,7 +499,7 @@ function PropSet:InsertChild(child)
 	return self
 end
 
-function PropSet:Change(name, callback)
+function PropSet:Change(name: string, callback: (GuiObject) -> ())
 	self.props[Roact.Change[name]] = callback
 	return self
 end
@@ -567,11 +570,6 @@ end
 
 function PropSet:DidUpdate(func)
 	self.props.didUpdate = func
-	return self
-end
-
-function PropSet:Name(name: string)
-	self.props.Name = name
 	return self
 end
 
@@ -652,16 +650,16 @@ function mod:Mount(tree, parent)
 	return root
 end
 
-function mod:Tween(start)
+function mod:Tween(start: number)
 	start = start or 0
 
-	local binding, _ = Roact.createBinding(start)
+	local binding = Roact.createBinding(start)
 	return binding:makeTweenable()
 end
 
 -- Portal functionality
 -- TODO: Test this with react 17 update
-function mod:Portal(children, container, prop_set, opt_key: string?)
+function mod:Portal(children: { Roact.Element<string> }, container: Instance, prop_set, opt_key: string?)
 	local props = prop_set.props
 	local element = RoactRbx.createPortal(children, container, props)
 	
@@ -1115,51 +1113,340 @@ local Classes = {
 local RoactSymbols = Roact.Symbols
 
 -- create :[propName]() functions
-for class, properties in pairs(Classes) do
-	for prop_name: string, _type in properties do
-		local ctor = TypeBindings[_type]
+-- put in a function for type utility
+local function build_prop_funcs(prop_target, mod_target)
+	for class, properties in pairs(Classes) do
+		for prop_name: string, _type in properties do
+			local ctor = TypeBindings[_type]
 
-		if typeof(rawget(PropSet, prop_name)) == "function" then
-			continue
-		end
+			if typeof(rawget(prop_target, prop_name)) == "function" then
+				continue
+			end
 
-		if type(ctor) == "function" then
-			PropSet[prop_name] = function(_self, binding, ...)
-				if typeof(binding) == "table" and binding["$$typeof"] == RoactSymbols.REACT_BINDING_TYPE then
-					_self.props[prop_name] = binding
-				else
-					local value = ctor(binding, ...)
-					_self.props[prop_name] = value
+			if type(ctor) == "function" then
+				prop_target[prop_name] = function(_self, binding, ...)
+					if typeof(binding) == "table" and binding["$$typeof"] == RoactSymbols.REACT_BINDING_TYPE then
+						_self.props[prop_name] = binding
+					else
+						local value = ctor(binding, ...)
+						_self.props[prop_name] = value
+					end
+					
+					return _self
 				end
-				
-				return _self
+			elseif ctor == "Event" then
+				local event_key = Roact.Event[prop_name]
+				prop_target[prop_name] = function(_self, value)
+					_self.props[event_key] = value
+					return _self
+				end
+			elseif ctor == "Change" then
+				local event_key = Roact.Change[prop_name]
+				prop_target[prop_name] = function(_self, value)
+					_self.props[event_key] = value
+					return _self
+				end
+			else
+				prop_target[prop_name] = function(_self, value)
+					_self.props[prop_name] = value
+					return _self
+				end
 			end
-		elseif ctor == "Event" then
-			local event_key = Roact.Event[prop_name]
-			PropSet[prop_name] = function(_self, value)
-				_self.props[event_key] = value
-				return _self
-			end
-		elseif ctor == "Change" then
-			local event_key = Roact.Change[prop_name]
-			PropSet[prop_name] = function(_self, value)
-				_self.props[event_key] = value
-				return _self
-			end
-		else
-			PropSet[prop_name] = function(_self, value)
-				_self.props[prop_name] = value
-				return _self
-			end
+		end
+
+		mod_target[class] = function(_self, prop_set: table)
+			local props = prop_set.props
+			local element = Roact.createElement(class, props)
+			
+			return element
 		end
 	end
 
-	mod[class] = function(_self, prop_set: table)
-		local props = prop_set.props
-		local element = Roact.createElement(class, props)
-		
-		return element
-	end
+	return prop_target
 end
+--type ReactElement = typeof(Roact.createElement("Frame"))
 
-return mod
+build_prop_funcs(PropSet, mod)
+
+type ComponentConfigFunc<Props> = (Roact.ComponentType<Props>) -> ()
+
+type AutomaticPropFunctions = typeof(build_prop_funcs({}, {}))
+
+type Content = string
+type bool = boolean
+type int = number
+type float = number
+
+type ValueAcceptor<T, R> = (T) -> R
+type OneArgCtor<T, P, R> = (T | P) -> R
+type TwoArgCtor<T, P, R> = (T | P, P?) -> R
+type ThreeArgCtor<T, P, R> = (T | P, P?, P?) -> R
+type FourArgCtor<T, P, R> = (T | P, P?, P?, P?) -> R
+type InputEvent<R> = ((InputObject) -> ()) -> R
+type InstanceEvent<R> = ((Instance) -> ()) -> R
+type VideoFrameEvent<R> = ((Content) -> ()) -> R
+
+type Props = { [string]: any}
+
+export type PropSet = {
+	props: { [string]: any },
+
+	RoundCorners: (number, number) -> PropSet,
+	Border: (thicknes: number, Color3) -> PropSet,
+	Invisible: () -> PropSet,
+	Line: (fromPos: UDim2, toPos: UDim2, thicknes: number) -> PropSet,
+	AspectRatioProp: (number) -> PropSet,
+	MoveBy: (xscale: number, xoffset: number, yscale: number, yoffset: number) -> PropSet,
+	Center: () -> PropSet,
+	JustifyLeft: (scaling: number, spacing: number) -> PropSet,
+	JustifyRight: (scaling: number, spacing: number) -> PropSet,
+	JustifyTop: (scaling: number, spacing: number) -> PropSet,
+	JustifyBottom: (scaling: number, spacing: number) -> PropSet,
+	OutsideLeft: (scaling: number, spacing: number) -> PropSet,
+	OutsideRight: (scaling: number, spacing: number) -> PropSet,
+	OutsideTop: (scaling: number, spacing: number) -> PropSet,
+	OutsideBottom: (scaling: number, spacing: number) -> PropSet,
+	Inset: (scaling: number, spacing: number) -> PropSet,
+	ScaledTextGroup: (groupName: string, text: string) -> PropSet,
+	Attribute: (name: string, any) -> PropSet,
+	Prop: (name: string, any) -> PropSet,
+	Ref: (any) -> PropSet,
+	Children: (... Roact.ReactElement) -> PropSet,
+	InsertChild: (Roact.ReactElement) -> PropSet,
+	Change: (name: string, callback: (Instance) -> ()) -> PropSet,
+	Run: ((Props, ... any) -> (), ... any) -> PropSet,
+	Target: (Instance) -> PropSet,
+	Init: (ComponentConfigFunc<Props>) -> PropSet,
+	Render: (ComponentConfigFunc<Props>) -> PropSet,
+	DidMount: (ComponentConfigFunc<Props>) -> PropSet,
+	WillUnmount: (ComponentConfigFunc<Props>) -> PropSet,
+	WillUpdate: (ComponentConfigFunc<Props>) -> PropSet,
+	ShouldUpdate: (ComponentConfigFunc<Props>) -> PropSet,
+	DidUpdate: (ComponentConfigFunc<Props>) -> PropSet,
+
+	AutoButtonColor: ValueAcceptor<bool, PropSet>,
+	Modal: ValueAcceptor<bool, PropSet>,
+	Selected: ValueAcceptor<bool, PropSet>,
+	Style: ValueAcceptor<Enum.Style, PropSet>,
+	Name: ValueAcceptor<string, PropSet>,
+	AutoLocalize: ValueAcceptor<bool, PropSet>,
+	RootLocalizationTable: LocalizationTable,
+	SelectionBehaviorDown: ValueAcceptor<Enum.SelectionBehavior, PropSet>,
+	SelectionBehaviorLeft: ValueAcceptor<Enum.SelectionBehavior, PropSet>,
+	SelectionBehaviorRight: ValueAcceptor<Enum.SelectionBehavior, PropSet>,
+	SelectionBehaviorUp: ValueAcceptor<Enum.SelectionBehavior, PropSet>,
+	SelectionGroup: ValueAcceptor<bool, PropSet>,
+	SelectionImageObject: ValueAcceptor<GuiObject, PropSet>,
+	ClipsDescendants: ValueAcceptor<bool, PropSet>,
+	Draggable: ValueAcceptor<bool, PropSet>,
+	Active: ValueAcceptor<bool, PropSet>,
+	AnchorPoint: TwoArgCtor<Vector2, number, PropSet>,
+	AutomaticSize: ValueAcceptor<Enum.AutomaticSize, PropSet>,
+	BackgroundColor3: ThreeArgCtor<Color3, number, PropSet>,
+	BackgroundTransparency: ValueAcceptor<float, PropSet>,
+	BorderColor3: ThreeArgCtor<Color3, number, PropSet>,
+	BorderMode: ValueAcceptor<Enum.BorderMode, PropSet>,
+	BorderSizePixel: ValueAcceptor<int, PropSet>,
+	LayoutOrder: ValueAcceptor<int, PropSet>,
+	Position: FourArgCtor<UDim2, number, PropSet>,
+	Rotation: ValueAcceptor<float, PropSet>,
+	Size: FourArgCtor<UDim2, number, PropSet>,
+	SizeConstraint: ValueAcceptor<Enum.SizeConstraint, PropSet>,
+	Transparency: ValueAcceptor<float, PropSet>,
+	Visible: ValueAcceptor<bool, PropSet>,
+	ZIndex: ValueAcceptor<int, PropSet>,
+	NextSelectionDown: ValueAcceptor<GuiObject, PropSet>,
+	NextSelectionLeft: ValueAcceptor<GuiObject, PropSet>,
+	NextSelectionRight: ValueAcceptor<GuiObject, PropSet>,
+	NextSelectionUp: ValueAcceptor<GuiObject, PropSet>,
+	Selectable: ValueAcceptor<bool, PropSet>,
+	SelectionOrder: ValueAcceptor<int, PropSet>,
+	Activated: InputEvent<PropSet>,
+	MouseButton1Click: InputEvent<PropSet>,
+	MouseButton1Down: InputEvent<PropSet>,
+	MouseEnter: InputEvent<PropSet>,
+	MouseLeave: InputEvent<PropSet>,
+	MouseButton1Up: InputEvent<PropSet>,
+	MouseButton2Click: InputEvent<PropSet>,
+	MouseButton2Down: InputEvent<PropSet>,
+	MouseButton2Up: InputEvent<PropSet>,
+	InputBegan: InputEvent<PropSet>,
+	InputEnded: InputEvent<PropSet>,
+	InputChanged: InputEvent<PropSet>,
+	TouchLongPress: InputEvent<PropSet>,
+	TouchPan: InputEvent<PropSet>,
+	TouchPinch: InputEvent<PropSet>,
+	TouchRotate: InputEvent<PropSet>,
+	TouchSwipe: InputEvent<PropSet>,
+	TouchTap: InputEvent<PropSet>,
+	GroupColor3: ThreeArgCtor<Color3, number, PropSet>,
+	GroupTransparency: ValueAcceptor<float, PropSet>,
+	DisplayOrder: ValueAcceptor<int, PropSet>,
+	Enabled: ValueAcceptor<bool, PropSet>,
+	IgnoreGuiInset: ValueAcceptor<bool, PropSet>,
+	ResetOnSpawn: ValueAcceptor<bool, PropSet>,
+	ZIndexBehavior: ValueAcceptor<Enum.ZIndexBehavior, PropSet>,
+	Adornee: ValueAcceptor<Instance | BasePart, PropSet>,
+	AlwaysOnTop: ValueAcceptor<bool, PropSet>,
+	LightInfluence: ValueAcceptor<float, PropSet>,
+	SizeOffset: TwoArgCtor<Vector2, number, PropSet>,
+	StudsOffset: ThreeArgCtor<Vector3, number, PropSet>,
+	ExtentsOffsetWorldSpace: ThreeArgCtor<Vector3, number, PropSet>,
+	MaxDistance: ValueAcceptor<float, PropSet>,
+	HoverImage: ValueAcceptor<Content, PropSet>,
+	Image: ValueAcceptor<Content, PropSet>,
+	ImageColor3: ThreeArgCtor<Color3, number, PropSet>,
+	ImageRectOffset: TwoArgCtor<Vector2, number, PropSet>,
+	ImageRectSize: TwoArgCtor<Vector2, number, PropSet>,
+	ImageTransparency: ValueAcceptor<float, PropSet>,
+	PressedImage: ValueAcceptor<Content, PropSet>,
+	ResampleMode: ValueAcceptor<Enum.ResamplerMode, PropSet>,
+	ScaleType: ValueAcceptor<Enum.ScaleType, PropSet>,
+	SliceCenter: FourArgCtor<Rect, number, PropSet>,
+	SliceScale: ValueAcceptor<float, PropSet>,
+	TileSize: FourArgCtor<UDim2, number, PropSet>,
+	Font: ValueAcceptor<Font, PropSet>,
+	FontFace: ValueAcceptor<Font, PropSet>,
+	LineHeight: ValueAcceptor<float, PropSet>,
+	MaxVisibleGraphemes: ValueAcceptor<int, PropSet>,
+	RichText: ValueAcceptor<bool, PropSet>,
+	Text: ValueAcceptor<string, PropSet>,
+	TextColor3: ThreeArgCtor<Color3, number, PropSet>,
+	TextScaled: ValueAcceptor<bool, PropSet>,
+	TextSize: ValueAcceptor<float, PropSet>,
+	TextStrokeColor3: ThreeArgCtor<Color3, number, PropSet>,
+	TextStrokeTransparency: ValueAcceptor<float, PropSet>,
+	TextTransparency: ValueAcceptor<float, PropSet>,
+	TextTruncate: ValueAcceptor<Enum.TextTruncate, PropSet>,
+	TextWrapped: ValueAcceptor<bool, PropSet>,
+	TextXAlignment: ValueAcceptor<Enum.TextXAlignment, PropSet>,
+	TextYAlignment: ValueAcceptor<Enum.TextYAlignment, PropSet>,
+	AutomaticCanvasSize: ValueAcceptor<Enum.AutomaticSize, PropSet>,
+	BottomImage: ValueAcceptor<Content, PropSet>,
+	CanvasPosition: TwoArgCtor<Vector2, number, PropSet>,
+	CanvasSize: FourArgCtor<UDim2, number, PropSet>,
+	ElasticBehavior: ValueAcceptor<Enum.ElasticBehavior, PropSet>,
+	HorizontalScrollBarInset: ValueAcceptor<Enum.ScrollBarInset, PropSet>,
+	MidImage: ValueAcceptor<Content, PropSet>,
+	ScrollBarImageColor3: ThreeArgCtor<Color3, number, PropSet>,
+	ScrollBarImageTransparency: ValueAcceptor<float, PropSet>,
+	ScrollBarThickness: ValueAcceptor<int, PropSet>,
+	ScrollingDirection: ValueAcceptor<Enum.ScrollingDirection, PropSet>,
+	ScrollingEnabled: ValueAcceptor<bool, PropSet>,
+	TopImage: ValueAcceptor<Content, PropSet>,
+	VerticalScrollBarInset: ValueAcceptor<Enum.ScrollBarInset, PropSet>,
+	VerticalScrollBarPosition: ValueAcceptor<Enum.VerticalScrollBarPosition, PropSet>,
+	ClearTextOnFocus: ValueAcceptor<bool, PropSet>,
+	CursorPosition: ValueAcceptor<int, PropSet>,
+	MultiLine: ValueAcceptor<bool, PropSet>,
+	SelectionStart: ValueAcceptor<int, PropSet>,
+	ShowNativeInput: ValueAcceptor<bool, PropSet>,
+	TextEditable: ValueAcceptor<bool, PropSet>,
+	PlaceholderColor3: ThreeArgCtor<Color3, number, PropSet>,
+	PlaceholderText: ValueAcceptor<string, PropSet>,
+	FocusLost: InstanceEvent<PropSet>,
+	Focused: InstanceEvent<PropSet>,
+	ReturnPressedFromOnScreenKeyboard: InputEvent<PropSet>,
+	Looped: ValueAcceptor<bool, PropSet>,
+	Playing: ValueAcceptor<bool, PropSet>,
+	TimePosition: ValueAcceptor<float, PropSet>,
+	Video: ValueAcceptor<Content, PropSet>,
+	Volume: ValueAcceptor<float, PropSet>,
+	DidLoop: VideoFrameEvent<PropSet>,
+	Ended: VideoFrameEvent<PropSet>,
+	Loaded: VideoFrameEvent<PropSet>,
+	Paused: VideoFrameEvent<PropSet>,
+	Played: VideoFrameEvent<PropSet>,
+	Ambient: ThreeArgCtor<Color3, number, PropSet>,
+	LightColor: ThreeArgCtor<Color3, number, PropSet>,
+	LightDirection: ThreeArgCtor<Vector3, number, PropSet>,
+	CurrentCamera: ValueAcceptor<Camera, PropSet>,
+	Color: ThreeArgCtor<ColorSequence | Color3, number, PropSet>,
+	Offset: TwoArgCtor<Vector2, number, PropSet>,
+	CornerRadius: TwoArgCtor<UDim, number, PropSet>,
+	MaxTextSize: ValueAcceptor<int, PropSet>,
+	MinTextSize: ValueAcceptor<int, PropSet>,
+	MaxSize: TwoArgCtor<Vector2, number, PropSet>,
+	MinSize: TwoArgCtor<Vector2, number, PropSet>,
+	AspectRatio: ValueAcceptor<float, PropSet>,
+	AspectType: ValueAcceptor<Enum.AspectType, PropSet>,
+	DominantAxis: ValueAcceptor<Enum.DominantAxis, PropSet>,
+	FillDirection: ValueAcceptor<Enum.FillDirection, PropSet>,
+	HorizontalAlignment: ValueAcceptor<Enum.HorizontalAlignment, PropSet>,
+	SortOrder: ValueAcceptor<Enum.SortOrder, PropSet>,
+	VerticalAlignment: ValueAcceptor<Enum.VerticalAlignment, PropSet>,
+	CellPadding: FourArgCtor<UDim2, number, PropSet>,
+	CellSize: FourArgCtor<UDim2, number, PropSet>,
+	FillDirectionMaxCells: ValueAcceptor<int, PropSet>,
+	StartCorner: ValueAcceptor<Enum.StartCorner, PropSet>,
+	Padding: TwoArgCtor<UDim, number, PropSet>,
+	Animated: ValueAcceptor<bool, PropSet>,
+	Circular: ValueAcceptor<bool, PropSet>,
+	EasingDirection: ValueAcceptor<Enum.EasingDirection, PropSet>,
+	EasingStyle: ValueAcceptor<Enum.EasingStyle, PropSet>,
+	TweenTime: ValueAcceptor<float, PropSet>,
+	GamepadInputEnabled: ValueAcceptor<bool, PropSet>,
+	ScrollWheelInputEnabled: ValueAcceptor<bool, PropSet>,
+	TouchInputEnabled: ValueAcceptor<bool, PropSet>,
+	PageEnter: InstanceEvent<PropSet>,
+	PageLeave: InstanceEvent<PropSet>,
+	Stopped: InstanceEvent<PropSet>,
+	FillEmptySpaceColumns: ValueAcceptor<bool, PropSet>,
+	FillEmptySpaceRows: ValueAcceptor<bool, PropSet>,
+	MajorAxis: ValueAcceptor<Enum.TableMajorAxis, PropSet>,
+	PaddingBottom: TwoArgCtor<UDim, number, PropSet>,
+	PaddingLeft: TwoArgCtor<UDim, number, PropSet>,
+	PaddingRight: TwoArgCtor<UDim, number, PropSet>,
+	PaddingTop: TwoArgCtor<UDim, number, PropSet>,
+	Scale: ValueAcceptor<float, PropSet>,
+	ApplyStrokeMode: ValueAcceptor<Enum.ApplyStrokeMode, PropSet>,
+	LineJoinMode: ValueAcceptor<Enum.LineJoinMode, PropSet>,
+	Thickness: ValueAcceptor<float, PropSet>,
+}
+
+export type PumpkinAPI = {
+	P: () -> PropSet,
+	Stateful: (PropSet) -> Roact.ComponentType<Props>,
+	RegisterModifier: ((PropSet) -> (PropSet)) -> (PropSet),
+	NewElement: (name: string, Roact.Element<string> | (PropSet) -> Roact.Element<string>) -> (),
+	Element: (name: string, PropSet) -> Roact.Element<string>,
+	Binding: (any) -> Roact.Binding<any>,
+	JoinBindings: ({ Roact.Binding<any> }) -> Roact.Binding<any>,
+	CreateRef: () -> Roact.Ref<any>,
+	Mount: (Roact.ComponentType<PropSet>) -> RoactRbx.RootType,
+	Tween: (number?) -> Roact.Binding<number>,
+	Portal: (children: { Roact.Element<string> }, container: Instance, PropSet, opt_key: string?) -> Roact.Element<unknown>,
+	IsPositionInObject: (Vector2, Instance) -> boolean,
+	IsScrollBarAtEnd: (Instance, padding: number?) -> boolean,
+
+	GuiButton: (PumpkinAPI, PropSet) -> Roact.Element<"GuiButton">,
+	GuiBase2d: (PumpkinAPI, PropSet) -> Roact.Element<"GuiBase2d">,
+	GuiObject: (PumpkinAPI, PropSet) -> Roact.Element<"GuiObject">,
+	CanvasGroup: (PumpkinAPI, PropSet) -> Roact.Element<"CanvasGroup">,
+	Frame: (PumpkinAPI, PropSet) -> Roact.Element<"Frame">,
+	ScreenGui: (PumpkinAPI, PropSet) -> Roact.Element<"ScreenGui">,
+	BillboardGui: (PumpkinAPI, PropSet) -> Roact.Element<"BillboardGui">,
+	ImageButton: (PumpkinAPI, PropSet) -> Roact.Element<"ImageButton">,
+	TextButton: (PumpkinAPI, PropSet) -> Roact.Element<"TextButton">,
+	ImageLabel: (PumpkinAPI, PropSet) -> Roact.Element<"ImageLabel">,
+	TextLabel: (PumpkinAPI, PropSet) -> Roact.Element<"TextLabel">,
+	ScrollingFrame: (PumpkinAPI, PropSet) -> Roact.Element<"ScrollingFrame">,
+	TextBox: (PumpkinAPI, PropSet) -> Roact.Element<"TextBox">,
+	VideoFrame: (PumpkinAPI, PropSet) -> Roact.Element<"VideoFrame">,
+	ViewportFrame: (PumpkinAPI, PropSet) -> Roact.Element<"ViewportFrame">,
+	UIGradient: (PumpkinAPI, PropSet) -> Roact.Element<"UIGradient">,
+	UICorner: (PumpkinAPI, PropSet) -> Roact.Element<"UICorner">,
+	UITextSizeConstraint: (PumpkinAPI, PropSet) -> Roact.Element<"UITextSizeConstraint">,
+	UISizeConstraint: (PumpkinAPI, PropSet) -> Roact.Element<"UISizeConstraint">,
+	UIAspectRatioConstraint: (PumpkinAPI, PropSet) -> Roact.Element<"UIAspectRatioConstraint">,
+	UIGridStyleLayout: (PumpkinAPI, PropSet) -> Roact.Element<"UIGridStyleLayout">,
+	UIGridLayout: (PumpkinAPI, PropSet) -> Roact.Element<"UIGridLayout">,
+	UIListLayout: (PumpkinAPI, PropSet) -> Roact.Element<"UIListLayout">,
+	UIPageLayout: (PumpkinAPI, PropSet) -> Roact.Element<"UIPageLayout">,
+	UITableLayout: (PumpkinAPI, PropSet) -> Roact.Element<"UITableLayout">,
+	UIPadding: (PumpkinAPI, PropSet) -> Roact.Element<"UIPadding">,
+	UIScale: (PumpkinAPI, PropSet) -> Roact.Element<"UIScale">,
+	UIStroke: (PumpkinAPI, PropSet) -> Roact.Element<"UIStroke">,
+}
+
+return (mod :: any) :: PumpkinAPI
