@@ -3,8 +3,24 @@ local I, P, Roact = Pumpkin, Pumpkin.P, Pumpkin.Roact
 
 local DebugMenu = require(game.ReplicatedFirst.DebugMenu)
 
-DebugMenu.RegisterSlider("Some Slider", 50, 0, 100, 0.5, nil, function(v)
+DebugMenu.RegisterSlider("Slider", 50, 0, 100, 0.5, nil, function(v)
 	print(v)
+end)
+ 
+DebugMenu.RegisterButton("Press", nil, function(a)
+	print("Client", a)
+end)
+
+DebugMenu.RegisterToggle("Toggle", true, nil, function(a)
+	print(a)
+end)
+
+DebugMenu.RegisterColor("Color", Color3.new(1,0,0), nil, function(a)
+	print(a)
+end)
+
+DebugMenu.RegisterText("Text", "ababa", nil, function(a)
+	print(a)
 end)
 
 local TestTween = I:Tween(0)
