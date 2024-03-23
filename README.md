@@ -6,8 +6,8 @@ For working examples, check out the children of [src/example/DebugMenu](src/exam
 ### Main Attractions
 * Short Syntax/Builder Pattern
 * Improved Bindings
-* Flipper is available through bindings directly
-* PropSet Modifiers
+* Flipper (an animation library) is available through bindings directly
+* Custom properties (PropSet Modifiers), as opposed to *just* custom elements.
 * Props receive datatype arguments instead of the datatype directly
 * Other/Utility
 
@@ -128,26 +128,41 @@ So essentially, Pumpkin Tweens are bindings with a sequence of animation steps. 
 
 ## Shared functionality
 
-Pumpkin provides a way for modules to define shared custom PropSet modifiers, elements, and components. As you'd expect, you can only use shared things after they've been defined; managing that is up to the user and shared functionality is not necessary if it is not convenient.
+Pumpkin provides a way for modules to define shared custom PropSet modifiers, elements, and components. As you'd expect, you can only use shared things after they've been defined.
 
 ```lua
 --[[ Shared custom modifiers ]]
-I:RegisterModifier("CustomModifier", function(props)
+
+-- definition
+I:RegisterModifier("CustomModifier", function(props, a, b)
 	props:AnchorPoint(math.random(), math.random())
 	props:Position(0.5, 0, 0.5, 0)
+	props:BackgroundTransparency(a - b^2)
 end)
 
---[[ Shared elements ]]
+-- use (directly by name)
+I:Frame(P()
+	:CustomModifier(1, 0.2)
+)
+
+
+--[[ Shared custom elements ]]
+
+-- definition
 I:NewElement("MyElement", I:Frame(P()))
 
 I:NewElement("MyElement2", function(props)
 	return I:Frame(P())
 end)
 
--- instantiation
+-- instantiation (directly by name)
+I:Element("MyElement", P())
 I:Element("MyElement2", P())
 
+
 --[[ Shared stateful components ]]
+
+-- definition
 I:Stateful(P()
 	:Name("MyStateful")
 	:Init(function(self)
@@ -156,66 +171,20 @@ I:Stateful(P()
 	end)
 )
 
--- instancing components can done directly by name
+-- instantiation (directly by name)
 local root = I:Mount(I:MyStateful(P()), game.Players.LocalPlayer.PlayerGui.ScreenGui)
 ```
 
-## Async dependencies
+To increase the convenience of this, we made a nice feature: the `ASYNC_DEFINITIONS` flag. It is on by default.
 
-However we have a nice feature to make it convenient: the `ASYNC_DEFINITIONS` flag. It is on by default.
+In most cases, when you use a framework that manages scripts for you with async definitions on, you wont have to worry about require order. If a script tries to use a shared modifier/element/component before it is defined, Pumpkin will wait a custom maximum of 0.2 seconds for the shared modifier/element/component to be defined.
 
-While shared functionality just works most of the time, you can engineer cases where dependencies stop the program from ever defining them. This flag will cause access to shared things to yield with a short timeout if they haven't been declared yet. This too can be thwarted but not easily. The primary tradeoff is a short delay before your error message is printed out...
-
-With frameworks that provide an execution model, i.e. callbacks you can define in a module's table to be called at stages of startup, we can treat the module level code as startup code. If you call `RegisterModifier` from only module-level code, and there is any callback you can define which is called once all scripts have been required, then any code in the callback will either have satisfied dependencies, or throw the appropriate error knowing that it is *not* a dependency issue.
-
-```lua
--- Script A
-
-I:RegisterModifier("CustomModifier", function(props)
-	props:AnchorPoint(math.random(), math.random())
-	props:Position(0.5, 0, 0.5, 0)
-end)
-
-I:Stateful(P()
-	:Name("MyStateful")
-	:Init(function(self)
-	end)
-	:Render(function(self)
-	end)
-)
-
-function mod.GameStarted()
-	-- Mount a stateful found in script B
-	local root = I:Mount(I:SomeOtherStateful(P()), game.Players.LocalPlayer.PlayerGui.ScreenGui)
-end
-
-
--- Script B
-
-I:Stateful(P()
-	:Name("SomeOtherStateful")
-	:Init(function(self)
-	end)
-	:Render(function(self)
-		return I:Frame(P()
-			:CustomModifier() -- found in script A
-		)
-	end)
-)
-
-function mod.GameStarted()
-	-- Mount the other stateful defined in script A
-	local root = I:Mount(I:MyStateful(P()), game.Players.LocalPlayer.PlayerGui.ScreenGui)
-end
-```
-
-Without the callbacks in the above example, it would still start regardless of require order or if one required the other, but not if you placed the `I:MyStateful` & `I:SomeOtherStateful` statements at the tops of the files.
-
+If you don't use a framework, you will need to ensure that the definitions come before the uses.
 
 ## Misc
 
 * More wrappers exist in [Pumpkin](src/Pumpkin/init.lua), such as Refs, Portals, and Change Events.
-* Custom Props had to be wrapped: `propSet:Prop(name, value)`
+* Custom Props had to be wrapped: `propSet:Prop(name, value)`.
 * [DebugMenu](src/example/DebugMenu/init.lua) for a fully fledged client and server debug menu with sliders, color pickers, plotting, checkboxes, and textboxes.
 * Props for host attribute's bindings `:Attribute("AttributeName", value/binding)`.
 * The Roact Type table has been exposed: `local isBinding = pulse["$$typeof"] == Roact.Type.Binding`.
@@ -224,11 +193,22 @@ Without the callbacks in the above example, it would still start regardless of r
 	Roact.createElement("Frame", {})
 		:JustifyLeft(0, 5)
 		:Children(
-	)
+		
+		)
 	```
 
 * There exists `I:IsPositionInObject`, `I:IsScrollBarAtEnd`.
 * `PropSet:ScaledTextGroup` is the better TextScaled that works with multiple TextLabels instead of just one.
+* The Pumpkin creation signature (`|` representing the final cursor position):
+	```
+	I:Frame(P()
+		|
+	)
+	```
+	A fast way to type this:
+	1) Use autocomplete parentheses.
+	2) Type `I:Frame(P()`, the code should now look like this: `I:Frame(P()|)` (`|` being the cursor).
+	3) Press `enter` -> `ctrl + shift + enter` -> `tab`.
 * `propSet:Run()` exists to maintain the tree structure of the code by offering in-tree custom modifiers that may be too niche to deserve a full on RegisteredModifier. The classic example is conditionals, without :Run, you may constantly be scrolling up and down leaving the tree to perform logic and then coming back.
 	```lua
 	-- Conditionally set props without bindings
