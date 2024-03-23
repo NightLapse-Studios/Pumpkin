@@ -481,16 +481,13 @@ if not IsServer then
 	local dbg_container = Instance.new("ScreenGui", Players.LocalPlayer.PlayerGui)
 	dbg_container.Name = "DebugMenu"
 
-	-- Test async functionality
-	task.spawn(function() I:Mount(I:DebugMenu(P()), dbg_container) end)
-
 	I:Stateful(P()
 		:Name("DebugMenu")
 		:Init(init)
 		:Render(render)
 	)
 
-	-- I:Mount(I:DebugMenu(P()), dbg_container)
+	I:Mount(I:DebugMenu(P()), dbg_container)
 end
 
 return mod
