@@ -15,7 +15,10 @@ DebugMenu.RegisterToggle("Toggle", true, nil, function(a)
 	print(a)
 end)
 
-DebugMenu.RegisterColor("Color", Color3.new(1,0,0), nil, function(a)
+DebugMenu.RegisterColor("Color", Color3.new(1,0,0), "Group two!", function(a)
+	print(a)
+end)
+DebugMenu.RegisterColor("Color", Color3.new(1,0,0), "Group two!", function(a)
 	print(a)
 end)
 

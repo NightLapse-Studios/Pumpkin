@@ -209,7 +209,7 @@ local function init(self)
 	self.ColorPicking = I:Binding(false)
 	self.ColorPickingColor = I:Binding(Color3.new())
 
-	self.Position = I:Binding(UDim2.new(0, 50, 0, 50))
+	self.Position = I:Binding(UDim2.new(0.5, 0, 0, 50))
 	self.Enabled = true
 
 	print("Press B to toggle debug menu example")
