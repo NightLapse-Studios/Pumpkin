@@ -7,7 +7,7 @@ For working examples, check out the children of [src/example/DebugMenu](src/exam
 * Short Syntax/Builder Pattern
 * Improved Bindings
 * Flipper (an animation library) is available through bindings directly
-* Custom properties (PropSet Modifiers), as opposed to *just* custom elements.
+* Custom properties (PropSet Modifiers), as opposed to just custom elements.
 * Props receive datatype arguments instead of the datatype directly
 * Other/Utility
 
@@ -137,12 +137,9 @@ Pumpkin provides a way for modules to define shared custom PropSet modifiers, el
 I:RegisterModifier("CustomModifier", function(props, a, b)
 	props:AnchorPoint(math.random(), math.random())
 	props:Position(0.5, 0, 0.5, 0)
-<<<<<<< HEAD
 	props:BackgroundTransparency(a - b^2)
-=======
 
 	return props
->>>>>>> 0b5c5265ef3d53a1dc13223e61ae5e874cb0b677
 end)
 
 -- use (directly by name)
@@ -180,11 +177,7 @@ I:Stateful(P()
 local root = I:Mount(I:MyStateful(P()), game.Players.LocalPlayer.PlayerGui.ScreenGui)
 ```
 
-To increase the convenience of this, we made a nice feature: the `ASYNC_DEFINITIONS` flag. It is on by default.
-
-In most cases, when you use a framework that manages scripts for you with async definitions on, you wont have to worry about require order. If a script tries to use a shared modifier/element/component before it is defined, Pumpkin will wait a custom maximum of 0.2 seconds for the shared modifier/element/component to be defined.
-
-If you don't use a framework, you will need to ensure that the definitions come before the uses (just like Roact).
+For convenience, we made the `ASYNC_DEFINITIONS` flag. It is on by default. It simply causes an undefined Element or field in Pumpkin/PropSets to yield for its definition. After a short timeout, anything still undefined will trigger the expected error, the only difference is that it was delayed. Async definitions can be leveraged with certain frameworks such as Knit to create a "definitions" stage of startup.
 
 ## Misc
 
