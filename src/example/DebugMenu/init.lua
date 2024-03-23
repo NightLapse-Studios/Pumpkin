@@ -457,6 +457,7 @@ local function render(self)
 					:Prop("Callback", function(value)
 						local props = self.ColorPicking:getValue()
 						if props then
+							props.Binding.update(value)
 							props.Callback(value)
 						end
 					end)
