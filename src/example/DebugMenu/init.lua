@@ -24,6 +24,9 @@ local mod = {}
 local menus = {}
 local plots = {}
 
+-- List of debug values that were created on the server for when the player finally joins
+local ServerOptions = { }
+
 local ServerCallbacks = {
 	RegisterSlider = {},
 	RegisterButton = {},
@@ -49,8 +52,9 @@ local function handleDebugMenuCreationBroadcaster(callName, ...)
 end
 
 if not IsServer then
-	DebugMenuDataTransmitter.OnClientEvent:Connect(handleDebugMenuDataTransmitter)
 	DebugMenuCreationBroadcaster.OnClientEvent:Connect(handleDebugMenuCreationBroadcaster)
+else
+	DebugMenuDataTransmitter.OnServerEvent:Connect(handleDebugMenuDataTransmitter)
 end
 
 local function getMenu(menu_name, isPlot)
@@ -111,11 +115,13 @@ function mod.SetPlotMaxPoints(menu_name, maxPoints)
 	MaxPointsHash[menu_name] = maxPoints
 end
 
-function mod.RegisterSlider(name, val: number, slider_min: number, slider_max: number, step: number, opt_menu_name, callback)
+function mod.RegisterSlider(name, val: number, slider_min: number, slider_max: number, step: number, opt_menu_name, callback, is_from_server: boolean?)
 	if IsServer then
+		ServerOptions[name] = {"RegisterSlider",  val, slider_min, slider_max, step, opt_menu_name, callback }
 		ServerCallbacks.RegisterSlider[name] = callback
 		DebugMenuCreationBroadcaster:FireAllClients("RegisterSlider", name, val, slider_min, slider_max, step, opt_menu_name)
 		return
+	elseif is_from_server then
 	end
 	
 	local binding = I:Binding(val)
@@ -133,11 +139,13 @@ function mod.RegisterSlider(name, val: number, slider_min: number, slider_max: n
 	return binding
 end
 
-function mod.RegisterButton(name, opt_menu_name, callback)
+function mod.RegisterButton(name, opt_menu_name, callback, is_from_server: boolean?)
 	if IsServer then
+		ServerOptions[name] = {"RegisterButton", name, opt_menu_name, callback}
 		ServerCallbacks.RegisterButton[name] = callback
 		DebugMenuCreationBroadcaster:FireAllClients("RegisterButton", name, opt_menu_name)
 		return
+	elseif is_from_server then
 	end
 	
 	table.insert(getMenu(opt_menu_name, false), {
@@ -147,11 +155,13 @@ function mod.RegisterButton(name, opt_menu_name, callback)
 	})
 end
 
-function mod.RegisterToggle(name, val, opt_menu_name, callback)
+function mod.RegisterToggle(name, val, opt_menu_name, callback, is_from_server: boolean?)
 	if IsServer then
+		ServerOptions[name] = {"RegisterToggle", name, val, opt_menu_name, callback}
 		ServerCallbacks.RegisterToggle[name] = callback
 		DebugMenuCreationBroadcaster:FireAllClients("RegisterToggle", name, val, opt_menu_name)
 		return
+	elseif is_from_server then
 	end
 	
 	local binding = I:Binding(val)
@@ -166,11 +176,13 @@ function mod.RegisterToggle(name, val, opt_menu_name, callback)
 	return binding
 end
 
-function mod.RegisterColor(name, val, opt_menu_name, callback)
+function mod.RegisterColor(name, val, opt_menu_name, callback, is_from_server: boolean?)
 	if IsServer then
+		ServerOptions[name] = {"RegisterColor", name, val, opt_menu_name, callback}
 		ServerCallbacks.RegisterColor[name] = callback
 		DebugMenuCreationBroadcaster:FireAllClients("RegisterColor", name, val, opt_menu_name)
 		return
+	elseif is_from_server then
 	end
 	
 	local binding = I:Binding(val)
@@ -185,11 +197,13 @@ function mod.RegisterColor(name, val, opt_menu_name, callback)
 	return binding
 end
 
-function mod.RegisterText(name, val, opt_menu_name, callback)
+function mod.RegisterText(name, val, opt_menu_name, callback, is_from_server: boolean?)
 	if IsServer then
+		ServerOptions[name] = {"RegisterText", name, val, opt_menu_name, callback}
 		ServerCallbacks.RegisterText[name] = callback
 		DebugMenuCreationBroadcaster:FireAllClients("RegisterText", name, val, opt_menu_name)
 		return
+	elseif is_from_server then
 	end
 	
 	local binding = I:Binding(val)
@@ -471,7 +485,13 @@ end
 
 
 
-if not IsServer then
+if IsServer then
+	game:GetService("Players").PlayerAdded:Connect(function(plr)
+		for name, params in ServerOptions do
+			DebugMenuCreationBroadcaster:FireClient(plr, table.unpack(params))
+		end
+	end)
+else
 	require(script:WaitForChild("DebugSlider"))
 	require(script:WaitForChild("DebugTextBox"))
 	require(script:WaitForChild("DebugCheckbox"))
