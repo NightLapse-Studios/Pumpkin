@@ -204,16 +204,6 @@ If you don't use a framework, you will need to ensure that the definitions come 
 
 * There exists `I:IsPositionInObject`, `I:IsScrollBarAtEnd`.
 * `PropSet:ScaledTextGroup` is the better TextScaled that works with multiple TextLabels instead of just one.
-* The Pumpkin creation signature (`|` representing the final cursor position):
-	```
-	I:Frame(P()
-		|
-	)
-	```
-	A fast way to type this:
-	1) Use autocomplete parentheses.
-	2) Type `I:Frame(P()`, the code should now look like this: `I:Frame(P()|)` (`|` being the cursor).
-	3) Press `enter` -> `ctrl + shift + enter` -> `tab`.
 * `propSet:Run()` exists to maintain the tree structure of the code by offering in-tree custom modifiers that may be too niche to deserve a full on RegisteredModifier. The classic example is conditionals, without :Run, you may constantly be scrolling up and down leaving the tree to perform logic and then coming back.
 	```lua
 	-- Conditionally set props without bindings
