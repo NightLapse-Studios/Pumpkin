@@ -487,7 +487,10 @@ if not IsServer then
 		:Render(render)
 	)
 
-	I:Mount(I:DebugMenu(P()), Players.LocalPlayer.PlayerGui)
+	local dbg_container = Instance.new("ScreenGui", Players.LocalPlayer.PlayerGui)
+	dbg_container.Name = "DebugMenu"
+
+	I:Mount(I:DebugMenu(P()), dbg_container)
 end
 
 return mod

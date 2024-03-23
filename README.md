@@ -137,7 +137,12 @@ Pumpkin provides a way for modules to define shared custom PropSet modifiers, el
 I:RegisterModifier("CustomModifier", function(props, a, b)
 	props:AnchorPoint(math.random(), math.random())
 	props:Position(0.5, 0, 0.5, 0)
+<<<<<<< HEAD
 	props:BackgroundTransparency(a - b^2)
+=======
+
+	return props
+>>>>>>> 0b5c5265ef3d53a1dc13223e61ae5e874cb0b677
 end)
 
 -- use (directly by name)
@@ -179,7 +184,7 @@ To increase the convenience of this, we made a nice feature: the `ASYNC_DEFINITI
 
 In most cases, when you use a framework that manages scripts for you with async definitions on, you wont have to worry about require order. If a script tries to use a shared modifier/element/component before it is defined, Pumpkin will wait a custom maximum of 0.2 seconds for the shared modifier/element/component to be defined.
 
-If you don't use a framework, you will need to ensure that the definitions come before the uses.
+If you don't use a framework, you will need to ensure that the definitions come before the uses (just like Roact).
 
 ## Misc
 
