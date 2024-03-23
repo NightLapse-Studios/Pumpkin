@@ -6,19 +6,6 @@ local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
 
-if not IsServer then
-	local sgui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-	sgui.Name = "DebugMenu"
-
-	-- For frameworks which manager your scripts, you can remove this block
-	require(script:WaitForChild("DebugSlider"))
-	require(script:WaitForChild("DebugTextBox"))
-	require(script:WaitForChild("DebugCheckbox"))
-	require(script:WaitForChild("DebugColorPicker"))
-	require(script:WaitForChild("DebugDraggableWindow"))
-	require(script:WaitForChild("DebugGraph"))
-end
-
 local DebugMenuDataTransmitter
 local DebugMenuCreationBroadcaster
 
@@ -73,7 +60,7 @@ local function getMenu(menu_name, isPlot)
 	
 	if not arr[menu_name] then
 		if isPlot then
-			arr[menu_name] = Roact.createBinding({})
+			arr[menu_name] = I:Binding({})
 		else
 			arr[menu_name] = {}
 		end
@@ -131,7 +118,7 @@ function mod.RegisterSlider(name, val: number, slider_min: number, slider_max: n
 		return
 	end
 	
-	local binding = Roact.createBinding(val)
+	local binding = I:Binding(val)
 	
 	table.insert(getMenu(opt_menu_name, false), {
 		Type = "Slider",
@@ -167,7 +154,7 @@ function mod.RegisterToggle(name, val, opt_menu_name, callback)
 		return
 	end
 	
-	local binding = Roact.createBinding(val)
+	local binding = I:Binding(val)
 	
 	table.insert(getMenu(opt_menu_name, false), {
 		Type = "Toggle",
@@ -186,7 +173,7 @@ function mod.RegisterColor(name, val, opt_menu_name, callback)
 		return
 	end
 	
-	local binding = Roact.createBinding(val)
+	local binding = I:Binding(val)
 	
 	table.insert(getMenu(opt_menu_name, false), {
 		Type = "Color",
@@ -205,7 +192,7 @@ function mod.RegisterText(name, val, opt_menu_name, callback)
 		return
 	end
 	
-	local binding = Roact.createBinding(val)
+	local binding = I:Binding(val)
 	
 	table.insert(getMenu(opt_menu_name, false), {
 		Type = "Text",
@@ -223,8 +210,9 @@ local function init(self)
 	self.ColorPickingColor = I:Binding(Color3.new())
 
 	self.Position = I:Binding(UDim2.new(0, 50, 0, 50))
-	self.Enabled = false
+	self.Enabled = true
 
+	print("Press B to toggle debug menu example")
 	local UserInputService = game:GetService("UserInputService")
 	UserInputService.InputBegan:Connect(function(io: InputObject)
 		if io.KeyCode == Enum.KeyCode.B then
@@ -480,17 +468,29 @@ local function render(self)
 	)
 end
 
+
+
 if not IsServer then
+	require(script:WaitForChild("DebugSlider"))
+	require(script:WaitForChild("DebugTextBox"))
+	require(script:WaitForChild("DebugCheckbox"))
+	require(script:WaitForChild("DebugColorPicker"))
+	require(script:WaitForChild("DebugDraggableWindow"))
+	require(script:WaitForChild("DebugGraph"))
+
+	local dbg_container = Instance.new("ScreenGui", Players.LocalPlayer.PlayerGui)
+	dbg_container.Name = "DebugMenu"
+
+	-- Test async functionality
+	task.spawn(function() I:Mount(I:DebugMenu(P()), dbg_container) end)
+
 	I:Stateful(P()
 		:Name("DebugMenu")
 		:Init(init)
 		:Render(render)
 	)
 
-	local dbg_container = Instance.new("ScreenGui", Players.LocalPlayer.PlayerGui)
-	dbg_container.Name = "DebugMenu"
-
-	I:Mount(I:DebugMenu(P()), dbg_container)
+	-- I:Mount(I:DebugMenu(P()), dbg_container)
 end
 
 return mod
