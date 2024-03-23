@@ -15,7 +15,7 @@ For working examples, check out the children of [src/example/DebugMenu](src/exam
 * This is an in-house tool cleaned up for a public version because it has, in our opinion, been nice to use and demonstrates nice ideas. The proving ground has been in [Clash!](https://www.roblox.com/games/8256020164/Clash-KNIGHT)
 * React features we don't use may be left unwrapped
 * The upgrade to react 17 was done as part of making a public version, so new react features since legacy roact haven't been looked at.
-* Upgrade to react 17 has only been tested on the debug menu example
+* Upgrade to react 17 has only been tested on the debug menu example (which was built on pumpkin with legacy roact)
 
 ## Installation
 Place the `src/Pumpkin` folder in your project library folder and require it. The source code is the release for now, we aren't fancy yet.
