@@ -49,6 +49,7 @@ export type ElementRef<C> = SharedModule.React_ElementRef<C>
 -- ROBLOX deviation START: manual type exports since that's not free with 'return React'
 export type ComponentClass<P> = SharedModule.React_ComponentType<P>
 export type PureComponent<Props, State = nil> = React.PureComponent<Props, State>
+export type ReactNodeList = SharedModule.ReactNodeList
 -- ROBLOX deviation END
 
 -- ROBLOX deviation START: definitelytyped typescript exports

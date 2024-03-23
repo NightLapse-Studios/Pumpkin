@@ -135,6 +135,8 @@ Pumpkin provides a way for modules to define shared custom PropSet modifiers, el
 I:RegisterModifier("CustomModifier", function(props)
 	props:AnchorPoint(math.random(), math.random())
 	props:Position(0.5, 0, 0.5, 0)
+
+	return props
 end)
 
 --[[ Shared elements ]]
@@ -174,6 +176,8 @@ With frameworks that provide an execution model, i.e. callbacks you can define i
 I:RegisterModifier("CustomModifier", function(props)
 	props:AnchorPoint(math.random(), math.random())
 	props:Position(0.5, 0, 0.5, 0)
+
+	return props
 end)
 
 I:Stateful(P()

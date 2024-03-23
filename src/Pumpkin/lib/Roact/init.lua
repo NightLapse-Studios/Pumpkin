@@ -24,7 +24,9 @@ export type ElementRef<C> = Package.ElementRef<C>
 export type ComponentClass<P> = Package.ComponentClass<P> 
 export type PureComponent<Props, State = nil> = Package.PureComponent<Props, State >
 -- @Pumpkin Object was undefied? Resolves to this anyhow from LuauPolyfill
-export type ReactElement<Props = { [string]: any }, ElementType = any> = Package.ReactElement<Props , ElementType > 
+export type ReactElement<Props = { [string]: any }, ElementType = any> = Package.ReactElement<Props , ElementType >
+-- @Pumpkin we need this and it's necessary to understand roots so idk why it isn't exported
+export type ReactNodeList = Package.ReactNodeList
 export type ReactChild = Package.ReactChild
 export type FC<P> = Package.FC<P> 
 export type ReactNode = Package.ReactNode

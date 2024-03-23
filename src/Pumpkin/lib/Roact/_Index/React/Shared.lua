@@ -33,7 +33,8 @@ export type MutableSource<Source> = Package.MutableSource<Source>
 export type Wakeable = Package.Wakeable
 export type Thenable<R> = Package.Thenable<R> 
 export type Source = Package.Source
-export type ReactElement<P = Object, T = any> = Package.ReactElement<P , T > 
+-- @Pumpkin another undefined Object replaced with its resolved type
+export type ReactElement<P = { [string]: any }, T = any> = Package.ReactElement<P , T > 
 export type OpaqueIDType = Package.OpaqueIDType
 export type Dispatcher = Package.Dispatcher
 export type React_Ref<ElementType> = Package.React_Ref<ElementType> 
