@@ -1,7 +1,7 @@
 # Pumpkin
 Pumpkin is a UI library that wraps Roact and Flipper to achieve better expressiveness and ease of writing components. It is highly recommended you understand developing with Roact before Pumpkin since it is built on Roact.
 
-For working examples, check out the children of [src/example/DebugMenu](src/example/DebugMenu/init.lua), such as [DebugCheckBox](src/example/DebugMenu/DebugCheckBox.lua), and most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua). Note: we may not write react in your style or with certain wisdom, but Pumpkin is primarily a wrapper, and as such the example code *can* be written in your preferred style. Some poeple blacklist class/stateful component patterns, but they are very intuitive to us, so that is the dominating pattern we have used in these examples.
+For working examples, check out the children of [src/example/DebugMenu](src/example/DebugMenu/init.lua), such as [DebugCheckBox](src/example/DebugMenu/DebugCheckBox.lua), and most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua). Note: we may not write react in your style or with certain wisdom, but Pumpkin is primarily a wrapper, and as such the example code *can* be written in your preferred style. Some people blacklist class/stateful component patterns, but they are very intuitive to us, so that is the dominating pattern we have used in these examples.
 
 ### Main Attractions
 * Short Syntax/Builder Pattern
@@ -19,6 +19,8 @@ For working examples, check out the children of [src/example/DebugMenu](src/exam
 
 ## Installation
 Place the `src/Pumpkin` folder in your project library folder and require it. The source code is the release for now, we aren't fancy yet.
+
+## Overview
 
 ### Short Syntax/Builder Pattern
 
@@ -77,7 +79,7 @@ I:JoinBindings({pulse, pulse2}):map(function(table)
 end)
 ```
 
-## PropSet modifiers
+### PropSet modifiers
 
 Constructing props through the builder pattern lets us put names on our ways of setting props:
 ```lua
@@ -105,7 +107,7 @@ I:Frame(P()
 ```
 
 
-## Tweens
+### Tweens
 
 Pumpkin Tweens are implemented as an extension to bindings and use Flippers UI Animation Library, they start playing when they are attached to an instance, and reset to the beginning when unattached. A tween with no sequences will start playing once sequences have been added to it, which is what you should do if you don't want your tween to play until you tell it to
 
