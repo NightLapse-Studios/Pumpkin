@@ -1,4 +1,4 @@
-local Pumpkin = require(game.ReplicatedFirst.Pumpkin)
+local Pumpkin = require(game.ReplicatedFirst.Shared.Pumpkin)
 local I, P = Pumpkin, Pumpkin.P
 
 local Graph = {}

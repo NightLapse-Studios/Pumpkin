@@ -17,7 +17,7 @@
 	-- called when the input after the FocusLost Event has passed all the checks.
 	Callback
 ]]
-local Pumpkin = require(game.ReplicatedFirst.Pumpkin)
+local Pumpkin = require(game.ReplicatedFirst.Shared.Pumpkin)
 local I, P, Roact = Pumpkin, Pumpkin.P, Pumpkin.Roact
 local ExpressionParser = require(script.Parent:WaitForChild("ExpressionParser"))
 
