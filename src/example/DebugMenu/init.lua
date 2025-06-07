@@ -249,7 +249,7 @@ local function render(self)
 			:LayoutOrder(#list)
 			:Size(0.94, 0, 0, 25)
 			:Invisible()
-		):Children(
+		)(
 			I:TextLabel(P()
 				:JustifyLeft(0,0)
 				:Font("Roboto")
@@ -266,7 +266,7 @@ local function render(self)
 				:JustifyRight(0,0)
 				:Size(0.45, 0, 0.8, 0)
 				:Invisible()
-			):Children(
+			)(
 				element
 			)
 		)) 
@@ -336,7 +336,7 @@ local function render(self)
 			:ScrollBarThickness(5)
 			:ClipsDescendants(true)
 			:Size(0.34, 0, 1, 0)
-		):Children(
+		)(
 			I:TextLabel(P()
 				:LayoutOrder(-1)
 				:Text(menu_name)
@@ -376,7 +376,7 @@ local function render(self)
 			ScreenMenuPlot = I:Frame(P()
 				:Size(1, 0, 1, 0)
 				:Invisible()
-			):Children(
+			)(
 				I:DebugGraph(P()
 					:Prop("Points", pointsBinding)
 					:Prop("CreatePoint", createPoint)
@@ -388,7 +388,7 @@ local function render(self)
 				:Name(menu_name)
 				:Invisible()
 				:Size(1, 0, 0, 150)
-			):Children(
+			)(
 				I:DebugGraph(P()
 					:Prop("Points", pointsBinding)
 					:Prop("CreatePoint", createPoint)
@@ -399,7 +399,7 @@ local function render(self)
 	
 	return I:ScreenGui(P()
 		:IgnoreGuiInset(true)
-	):Children(
+	)(
 		I:DebugDraggableWindow(P()
 			:Size(0, 500, 0, 300)
 			:Prop("PositionBinding", self.Position)
@@ -417,7 +417,7 @@ local function render(self)
 					:ScrollBarThickness(5)
 					:ClipsDescendants(true)
 					:Size(1, 0, 0.5, 0)
-				):Children(
+				)(
 					I:UIListLayout(P()
 						:FillDirection("Horizontal")
 						:SortOrder("Name")
@@ -437,7 +437,7 @@ local function render(self)
 					:ClipsDescendants(true)
 					:Size(1, 0, 0.5, 0)
 					:Position(0, 0, 0.5, 0)
-				):Children(
+				)(
 					I:UIListLayout(P()
 						:FillDirection("Vertical")
 						:SortOrder("Name")

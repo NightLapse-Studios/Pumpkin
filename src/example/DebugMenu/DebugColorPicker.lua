@@ -71,7 +71,7 @@ local function render(self)
 			:LayoutOrder(#List)
 			:Size(1, 0, 0.12, 0)
 			:Invisible()
-		):Children(
+		)(
 			I:TextLabel(P()
 				:JustifyLeft(0,0)
 				:Font("Roboto")
@@ -88,7 +88,7 @@ local function render(self)
 				:JustifyRight(0,0)
 				:Size(0.85, 0, 1, 0)
 				:Invisible()
-			):Children(
+			)(
 				element
 			)
 		)) 
@@ -205,7 +205,7 @@ local function render(self)
 		:Size(1, 0, 1, 0)
 		:Invisible()
 		:AspectRatioProp(0.5)
-	):Children(
+	)(
 		I:ImageButton(P()
 			:AutoButtonColor(false)
 			:AspectRatioProp(1)
@@ -222,7 +222,7 @@ local function render(self)
 			:MouseButton1Down(function()
 				grabbed = self
 			end)
-		):Children(
+		)(
 			I:ImageButton(P()
 				:AutoButtonColor(false)
 				:Size(0, 20, 0, 20)
@@ -246,7 +246,7 @@ local function render(self)
 			:Position(0, 0, 0.5, 0)
 			:Size(0.9, 0, 0.45, 0)
 			:Invisible()
-		):Children(
+		)(
 			I:UIListLayout(P()
 				:Padding(0.04, 0)
 				:FillDirection("Vertical")

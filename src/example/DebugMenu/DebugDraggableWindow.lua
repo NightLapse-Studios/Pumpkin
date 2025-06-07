@@ -22,7 +22,7 @@ I:Stateful(P()
 			:BackgroundColor3(0.08, 0.08, 0.08)
 			:Position(self.props.PositionBinding)
 			:Visible(self.props.Visible)
-		):Children(
+		)(
 			I:TextButton(P()
 				:Size(1, 0, 0, 25)
 				:Text(self.props.Title)
@@ -45,7 +45,7 @@ I:Stateful(P()
 						Offset = grabOffset,
 					}
 				end)
-			):Children(
+			)(
 				I:ImageButton(P()
 					:JustifyRight(0, 5)
 					:BackgroundColor3(1,0,0)
@@ -66,7 +66,7 @@ I:Stateful(P()
 			I:Frame(P()
 				:Size(1, 0, 1, 0)
 				:Invisible()
-			):Children(
+			)(
 				self.props.Children
 			)
 		)

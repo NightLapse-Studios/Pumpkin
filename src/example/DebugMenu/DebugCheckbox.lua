@@ -12,7 +12,7 @@ I:Stateful(P()
 		return I:Frame(P()
 			:Size(1, 0, 1, 0)
 			:Invisible()
-		):Children(
+		)(
 			I:TextButton(P()
 				:Size(1, 0, 1, 0)
 				:Center()
@@ -31,7 +31,7 @@ I:Stateful(P()
 					binding.update(not binding:getValue())
 					callback(binding:getValue())
 				end)
-			):Children(
+			)(
 				I:Frame(P()
 					:Invisible()
 					:Size(1, 2, 1, 2)

@@ -1,24 +1,25 @@
-# Pumpkin
-Pumpkin is a UI library that wraps Roact and Flipper to achieve better expressiveness and ease of writing components. It is highly recommended you understand developing with Roact before Pumpkin since it is built on Roact.
+![A Pumpkin](PumpkingWithTitleNoBG.png)
 
-For working examples, check out the children of [src/example/DebugMenu](src/example/DebugMenu/init.lua), such as [DebugCheckBox](src/example/DebugMenu/DebugCheckBox.lua), and most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua). Note: we may not write react in your style or with certain wisdom, but Pumpkin is primarily a wrapper, and as such the example code *can* be written in your preferred style. Some people blacklist class/stateful component patterns, but they are very intuitive to us, so that is the dominating pattern we have used in these examples.
+Pumpkin is a UI library that wraps Roact and Flipper to achieve better expressiveness and ease of writing components.
+
+Most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua).
 
 ### Main Attractions
 * Short Syntax/Builder Pattern
-* Improved Bindings
-* Flipper (an animation library) is available through bindings directly
-* Custom properties (PropSet Modifiers), as opposed to just custom elements.
-* Props receive datatype arguments instead of the datatype directly
-* Other/Utility
+* Bindings class functions exposed and joining made easier
+* Flipper (an animation library) is available directly through bindings
+* Custom properties (PropSet Modifiers), as opposed to just custom elements
+* Props can receive datatype arguments instead of the datatype directly
+* Attributes work
+* Edit element properties after creation
+* Multiple utility/custom properties have already been made like ScaledTextGroup
 
-### Warning
-* This is an in-house tool cleaned up for a public version because it has, in our opinion, been nice to use and demonstrates nice ideas. The proving ground has been in [Clash!](https://www.roblox.com/games/8256020164/Clash-KNIGHT)
-* React features we don't use may be left unwrapped
-* The upgrade to react 17 was done as part of making a public version, so new react features since legacy roact haven't been looked at.
-* Upgrade to react 17 has only been tested on the debug menu example (which was built on pumpkin with legacy roact)
+### Projects
+* [Clash!](https://www.roblox.com/games/8256020164/Clash-KNIGHT) 
+* [src/example/DebugMenu](src/example/DebugMenu/init.lua)
 
 ## Installation
-Place the `src/Pumpkin` folder in your project library folder and require it. The source code is the release for now, we aren't fancy yet.
+Place the `src/Pumpkin` folder in your project library folder and require it.
 
 ## Overview
 
@@ -33,18 +34,19 @@ local I, P = Pumpkin, Pumpkin.P
 local Roact, RoactRbx = Pumpkin.Roact, Pumpkin.RoactRbx
 
 I:ImageButton(P()
-	-- No need to type `Color3.new(...),`
-	-- You can also pass in a color3 or binding.
+	:Center()
 	:BackgroundColor3(1, 0, 0)
 	:Activated(function()
 		print("Clicked!")
 	end)
-):Children(
+)(
 	-- more elements
 )
 
 -- Equivalent to:
 Roact.createElement("ImageButton", {
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
 	BackgroundColor3 = Color3.new(1, 0, 0),
 	[Roact.Event.Activated] = function()
 		print("Clicked!")
@@ -64,9 +66,12 @@ local pulse, updPulse = I:Binding(0)
 -- Equivalent:
 updPulse(0.5)
 pulse.update(0.5)
-
+```
+Also exposed is subscribe
+```lua
 local disconnect_func = pulse.subscribe(function(newPulseValue) end)
 ```
+
 
 When joining bindings, everything goes. Mostly useful for general purpose UI components, we no longer have to check if passed in props are bindings or pure values:
 ```lua
@@ -84,12 +89,15 @@ end)
 Constructing props through the builder pattern lets us put names on our ways of setting props:
 ```lua
 I:Frame(P()
-	 -- Center the UI within its parent
+	-- no border and no background
+	:Invisible()
+	
+	-- center anchor and center position
 	:Center()
 	-- Position it 5 pixels away from the left side of its parent, (overwriting the :Center() call above)
 	-- The parameters are interpreted as UDim parameters
 	:JustifyLeft(0, 5)
-	:Invisible()
+	
 	-- Propset modifiers can do a lot more than modify props
 	-- This example involves inserting children into the props as well, a UIAspectRatioConstraint
 	:AspectRatioProp(1/3)
@@ -100,9 +108,8 @@ Custom modifiers can get pretty advanced, for example we have implemented this:
 
 ```lua
 I:Frame(P()
-	:Size(1, 0, 1, 0)
-	-- Draw a 3 pixel line from the anchor point, in the instance's coordinate space
-	:Line(UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), 3)
+	-- Make this frame a 3 pixel line from the top left of the parent to the bottom right
+	:Line(UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), 3)
 )
 ```
 

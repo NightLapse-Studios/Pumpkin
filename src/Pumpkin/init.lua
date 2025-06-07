@@ -358,7 +358,12 @@ mod = (mod :: any) :: PumpkinAPI
 
 local PropSet = { }
 
-local mt_PropSet = { __index = PropSet }
+local mt_PropSet = {
+	__index = PropSet,
+	__call = function(self, ...)
+		return self:Children(...)
+	end
+}
 
 if ASYNC_DEFINITIONS then
 	--[[
@@ -977,7 +982,7 @@ function mod:IsScrollBarAtEnd(barRBX, damp)
 end
 
 local ReactElement = require(script.lib.Roact._Index.React.React.ReactElement)
-ReactElement.__set_pumpkin_mt({__index = PropSet})
+ReactElement.__set_pumpkin_mt(mt_PropSet)
 
 
 

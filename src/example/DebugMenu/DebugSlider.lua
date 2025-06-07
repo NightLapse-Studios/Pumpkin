@@ -53,7 +53,7 @@ local function render_Slider(self)
 	return I:Frame(P()
 		:Size(1, 0, 1, 0)
 		:Invisible()
-	):Children(
+	)(
 		I:ImageButton(P()
 			:Size(0.7, 0, 0.5, 0)
 			:BorderSizePixel(1)
@@ -64,7 +64,7 @@ local function render_Slider(self)
 			:MouseButton1Down(function()
 				grabbed[1] = self
 			end)
-		):Children(
+		)(
 			I:ImageButton(P()
 				:Size(1, 0, 2, 0)
 				:AspectRatioProp(0.3)
@@ -87,7 +87,7 @@ local function render_Slider(self)
 			:AnchorPoint(1, 0.5)
 			:Size(0.28, 0, 1, 0)
 			:Invisible()
-		):Children(
+		)(
 			I:DebugTextBox(P()
 				:Prop("IsNumber", true)
 				:Prop("Increment", increment)
