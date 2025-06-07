@@ -1,5 +1,7 @@
 ![A Pumpkin](PumpkingWithTitleNoBG.png)
 
+# Pumpkin
+
 Pumpkin is a UI library that wraps Roact and Flipper to achieve better expressiveness and ease of writing components.
 
 Most functionality is implemented in a single file: [Pumpkin](src/Pumpkin/init.lua).
@@ -30,9 +32,6 @@ Place the `src/Pumpkin` folder in your project library folder and require it.
 local Pumpkin = require(game.ReplicatedFirst.Pumpkin)
 local I, P = Pumpkin, Pumpkin.P
 
--- Roact 17 and Roact legacy modules are available, just in case
-local Roact, RoactRbx = Pumpkin.Roact, Pumpkin.RoactRbx
-
 I:ImageButton(P()
 	:Center()
 	:BackgroundColor3(1, 0, 0)
@@ -43,6 +42,8 @@ I:ImageButton(P()
 	-- more elements
 )
 
+-- Roact 17 and Roact legacy modules are available, just in case
+local Roact, RoactRbx = Pumpkin.Roact, Pumpkin.RoactRbx
 -- Equivalent to:
 Roact.createElement("ImageButton", {
 	AnchorPoint = Vector2.new(0.5, 0.5),
