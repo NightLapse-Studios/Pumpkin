@@ -1,4 +1,4 @@
-local Pumpkin = require(game.ReplicatedFirst.Shared.Pumpkin)
+local Pumpkin = require(game.ReplicatedFirst.Pumpkin)
 local I, P, Roact = Pumpkin, Pumpkin.P, Pumpkin.Roact
 
 local Players = game:GetService("Players")

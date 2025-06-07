@@ -26,7 +26,7 @@ Place the `src/Pumpkin` folder in your project library folder and require it. Th
 
 ```lua
 -- Imports (always the same) (will be omitted from the README here on out)
-local Pumpkin = require(game.ReplicatedFirst.Shared.Pumpkin)
+local Pumpkin = require(game.ReplicatedFirst.Pumpkin)
 local I, P = Pumpkin, Pumpkin.P
 
 -- Roact 17 and Roact legacy modules are available, just in case
